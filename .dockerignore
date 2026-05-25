@@ -1,0 +1,8 @@
+target/
+data/
+backups/
+.idea/
+.git/
+*.iml
+application-local.properties
+**/.DS_Store

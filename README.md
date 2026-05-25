@@ -20,6 +20,43 @@ java -version
 
 На Windows, если в `PATH` остаётся Java 8, укажите **полный путь** к `java.exe` 21-й версии (см. примеры ниже) или выставьте `JAVA_HOME` на JDK 21 **до** вызова `java` / `mvn`.
 
+## Быстрый старт (Docker)
+
+Требуется **Docker** и **Docker Compose** v2.
+
+```bash
+docker compose up --build
+```
+
+Приложение: http://localhost:8080
+
+**С демо-отчётами** (первый запуск с примерами в Dashboard):
+
+```bash
+REPORT_SEED_DEMO=true docker compose up --build
+```
+
+PowerShell:
+
+```powershell
+$env:REPORT_SEED_DEMO = "true"
+docker compose up --build
+```
+
+**Токен Allure TestOps** (опционально):
+
+```bash
+ALLURE_TESTOPS_TOKEN=ваш-токен docker compose up --build
+```
+
+Данные H2 и архивы хранятся в именованных томах Docker (`report-data`, `report-backups`). Сброс БД:
+
+```bash
+docker compose down -v
+```
+
+Локальный `application-local.properties` можно смонтировать в контейнер (см. комментарий в `docker-compose.yml`).
+
 ## Быстрый старт (локально)
 
 ### 1. Сборка
