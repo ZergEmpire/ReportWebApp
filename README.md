@@ -65,12 +65,14 @@ docker compose down -v
 |----------|----------|
 | Окружение / инструмент | `docker` |
 | `dockerfile` | `Dockerfile` |
-| **`command`** | **пусто** (не `docker compose up` — Compose на Amvera [не поддерживается](https://docs.amvera.ru/applications/configuration/docker.html)) |
+| **`command`** | `/app/docker-entrypoint.sh` (не `docker compose up` — в контейнере нет compose, будет 502) |
 | `args` | пусто |
 | `persistenceMount` | `/data` |
-| Порт контейнера | **8080** (в UI или в `amvera.yaml`: `containerPort: 8080`) |
+| Порт контейнера | **8080** |
 
-В репозитории лежит **`amvera.yaml`** с этими настройками — после `git push` Amvera подхватит конфиг из git (или скопируйте значения вручную и **очистите** поле command).
+В репозитории **`amvera.yaml`** задаёт эти значения. После `git push` пересоберите проект. Если в UI осталось `docker compose up` — замените на `/app/docker-entrypoint.sh` или очистите command и сохраните.
+
+**502 Bad Gateway:** в логе системы ищите `exec: "docker compose up": executable file not found` — это неверная команда запуска. В логе приложения после успешного старта должно быть: `profile is active: "amvera"` и `jdbc:h2:file:/data/reportdb`.
 
 БД H2 и архивы пишутся в постоянное хранилище `/data` (профиль `amvera`). Токен Allure — переменная окружения `ALLURE_TESTOPS_TOKEN` в настройках проекта Amvera.
 

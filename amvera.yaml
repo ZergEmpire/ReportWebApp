@@ -10,7 +10,7 @@ build:
   dockerfile: Dockerfile
 
 run:
+  # Явная команда перебивает ошибочное "docker compose up" из UI Amvera
+  command: /app/docker-entrypoint.sh
   containerPort: 8080
   persistenceMount: /data
-  # command и args НЕ указывать — запуск через ENTRYPOINT в Dockerfile (java -jar).
-  # Не используйте "docker compose up" — платформа сама собирает образ из Dockerfile.
