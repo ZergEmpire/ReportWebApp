@@ -1,0 +1,18 @@
+☑️ Результаты тестирования приложения appScreener.
+========================
+*Стенд, где проходил автотест: \n*
+`https://ui-stand.test.example.com`
+*Название набора: \n*
+`ProjectsPageSmokeTestSuite`
+*Значение переменной CI_SUITES для запуска Pipeline:\n*
+`Release/ProjectsPageSmokeTestSuite.xml`
+========================
+*Статистика:\n*
+Всего тестов: 18
+Успешных: 11
+Проваленных (ошибка): 5
+Не запущенных (системная ошибка): 2
+Время прохождения всех тестов: 01:12:33
+
+[🔗 Ссылка на Pipeline](https://gitlab.example.com/jobs/2002)
+[📊 Ссылка на Allure TestOps](https://dersecur.testops.cloud/launch/2002)

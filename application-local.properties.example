@@ -1,0 +1,2 @@
+# Скопируйте в application-local.properties и подставьте API token из Allure TestOps (User → API Tokens)
+report.allure.api-token=your-allure-api-token-here

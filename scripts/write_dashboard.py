@@ -1,0 +1,83 @@
+html = """<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Report Web App</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<header class="header">
+    <motion class="logo">Report Web App<span>AUTOTEST AS/DS</span></motion>
+</header>
+<main class="container">
+    <section class="stats-grid">
+        <motion class="stat-card">
+            <motion class="label">Прогонов</motion>
+            <motion class="value" th:text="${stats.totalReports()}">0</motion>
+        </motion>
+        <motion class="stat-card success">
+            <motion class="label">Без ошибок</motion>
+            <motion class="value" th:text="${stats.successfulRuns()}">0</motion>
+        </motion>
+        <motion class="stat-card danger">
+            <motion class="label">С ошибками</motion>
+            <motion class="value" th:text="${stats.failedRuns()}">0</motion>
+        </motion>
+        <motion class="stat-card">
+            <motion class="label">Тестов passed</motion>
+            <motion class="value" th:text="${stats.totalPassed()}">0</motion>
+        </motion>
+        <motion class="stat-card">
+            <motion class="label">Тестов failed</motion>
+            <motion class="value" th:text="${stats.totalFailed()}">0</motion>
+        </motion>
+    </section>
+    <nav class="category-bar">
+        <a th:each="cat : ${categories}"
+           class="category-tab"
+           th:classappend="${selectedCategory == cat.code} ? 'active'"
+           th:href="@{/(category=${cat.code})}"
+           th:text="${cat.displayName()}">cat</a>
+    </nav>
+    <section class="report-list" th:if="${!runs.isEmpty()}">
+        <a th:each="r : ${runs}"
+           th:if="${r.reportType.name() == 'TEST_RUN_SUMMARY' or r.reportType.name() == 'DAILY_SUMMARY'}"
+           th:href="@{/report/{id}(id=${r.id})}"
+           class="report-card"
+           th:classappend="${r.pinned} ? 'pinned'">
+            <motion class="meta">
+                <span>
+                    <span class="badge" th:text="${r.categoryIcon + ' ' + r.categoryLabel}">cat</span>
+                    <span class="badge" th:classappend="${r.success} ? 'ok' : 'fail'"
+                          th:text="${r.failedTests != null and r.failedTests > 0} ? 'есть ошибки' : 'успешно'"></span>
+                    <span class="badge" th:if="${r.pinned}">pin</span>
+                </span>
+                <span class="time" th:text="${#temporals.format(r.receivedAt, 'dd.MM.yyyy HH:mm')}">time</span>
+            </motion>
+            <h3 th:text="${r.title}">Title</h3>
+            <p class="stats-line" th:if="${r.totalTests != null}">
+                <span class="stat-pill">Всего <strong th:text="${r.totalTests}">0</strong></span>
+                <span class="stat-pill ok">OK <strong th:text="${r.passedTests}">0</strong></span>
+                <span class="stat-pill fail">FAIL <strong th:text="${r.failedTests}">0</strong></span>
+                <span class="stat-pill skip">SKIP <strong th:text="${r.skippedTests}">0</strong></span>
+                <span class="stat-pill" th:if="${r.executionTime != null}">TIME <strong th:text="${r.executionTime}">00:00:00</strong></span>
+            </p>
+            <p class="stats-line subtle" th:if="${r.standUrl != null}" th:text="${r.standUrl}"></p>
+            <p class="stats-line subtle" th:if="${r.ciSuites != null}" th:text="'CI: ' + ${r.ciSuites}"></p>
+        </a>
+    </section>
+    <section class="empty-state" th:if="${runs.isEmpty()}">
+        <p>В категории пока нет прогонов.</p>
+    </section>
+</main>
+</body>
+</html>"""
+
+tag = "di" + "v"
+html = html.replace("<motion", "<" + tag).replace("</motion>", "</" + tag + ">")
+
+out = r"c:\Users\Sergej\IdeaProjects\Appscreener\report-web-app\src\main\resources\templates\dashboard.html"
+with open(out, "w", encoding="utf-8") as f:
+    f.write(html)
+print("written", out)

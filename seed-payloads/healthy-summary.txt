@@ -1,0 +1,18 @@
+☑️ Результаты тестирования приложения appScreener.
+========================
+*Стенд, где проходил автотест: \n*
+`https://health-prod.example.com`
+*Название набора: \n*
+`HealthCheckSuite`
+*Значение переменной CI_SUITES для запуска Pipeline:\n*
+`WeekTests/HealthMonitor.xml`
+========================
+*Статистика:\n*
+Всего тестов: 6
+Успешных: 5
+Проваленных (ошибка): 1
+Не запущенных (системная ошибка): 0
+Время прохождения всех тестов: 00:05:41
+
+[🔗 Ссылка на Pipeline](https://gitlab.example.com/jobs/2004)
+[📊 Ссылка на Allure TestOps](https://dersecur.testops.cloud/launch/2004)

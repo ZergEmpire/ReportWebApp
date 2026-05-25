@@ -1,0 +1,10 @@
+========================
+*Наборы, пройденные с ошибками:*
+========================
+❌ 19.05.2026 14:00
+[Release — full](http://localhost:8080/report/demo-suite-release)
+(`Release/ReleaseSet.xml`)
+
+❌ 19.05.2026 15:30
+[Healthy — monitor](http://localhost:8080/report/demo-suite-healthy)
+(`WeekTests/HealthMonitor.xml`)

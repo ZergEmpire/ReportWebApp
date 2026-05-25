@@ -1,0 +1,18 @@
+☑️ Результаты тестирования приложения appScreener.
+========================
+*Стенд, где проходил автотест: \n*
+`https://release-candidate.example.com`
+*Название набора: \n*
+`ReleaseSet`
+*Значение переменной CI_SUITES для запуска Pipeline:\n*
+`Release/ReleaseSet.xml`
+========================
+*Статистика:\n*
+Всего тестов: 42
+Успешных: 8
+Проваленных (ошибка): 28
+Не запущенных (системная ошибка): 6
+Время прохождения всех тестов: 02:58:17
+
+[🔗 Ссылка на Pipeline](https://gitlab.example.com/jobs/2005)
+[📊 Ссылка на Allure TestOps](https://dersecur.testops.cloud/launch/2005)

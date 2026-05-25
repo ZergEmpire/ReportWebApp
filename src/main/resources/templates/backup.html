@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Архив истории — Report Web App</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<header class="header">
+    <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
+    <nav class="header-nav">
+        <a th:href="@{/}">Dashboard</a>
+        <a th:href="@{/backup}" class="active">Архив истории</a>
+    </nav>
+</header>
+<main class="container backup-page">
+    <a class="back-link" th:href="@{/}">← Назад к Dashboard</a>
+
+    <article class="report-hero">
+        <h1><span class="hero-icon">💾</span> Архив истории отчётов</h1>
+        <p class="hero-meta">Компактный снимок прогонов и сообщений · не полная копия диска H2</p>
+    </article>
+
+    <DIV class="flash" th:if="${message != null}" th:classappend="${messageType}">
+        <span th:text="${message}">msg</span>
+    </DIV>
+
+    <section class="info-block">
+        <h2 class="block-title">Зачем это нужно</h2>
+        <ul class="info-list compact">
+            <li>Сохранить историю автотестов в лёгком формате <code class="info-code">history-*.json.gz</code> (JSON + сжатие).</li>
+            <li>При сбое или миграции — <strong>накатить</strong> архив обратно без перезапуска сервера.</li>
+            <li>Плановый архив <strong>раз в неделю</strong> и только если данные изменились — без лишней нагрузки.</li>
+        </ul>
+    </section>
+
+    <section class="info-block">
+        <h2 class="block-title">Настройки</h2>
+        <ul class="info-list compact">
+            <li><strong>Статус:</strong> <span th:text="${enabled} ? 'включено' : 'отключено'">вкл</span></li>
+            <li><strong>Каталог:</strong> <code class="info-code" th:text="${directory}">./backups</code></li>
+            <li><strong>Расписание:</strong> <code class="info-code" th:text="${cron}">cron</code></li>
+            <li><strong>Хранить архивов:</strong> <span th:text="${keepCount}">8</span></li>
+            <li><strong>Пропуск без изменений:</strong> <span th:text="${skipIfUnchanged} ? 'да' : 'нет'">да</span></li>
+        </ul>
+    </section>
+
+    <section class="backup-actions" th:if="${enabled}">
+        <form th:action="@{/backup/create}" method="post">
+            <button type="submit" class="btn-primary">Сохранить историю сейчас</button>
+        </form>
+        <p class="hint">Перед накатом из списка создаётся страховочный архив текущих данных (если они есть).</p>
+    </section>
+
+    <section class="tests-block upload-block" th:if="${enabled}">
+        <h2 class="block-title">Загрузить архив с компьютера</h2>
+        <form th:action="@{/backup/upload}" method="post" enctype="multipart/form-data" class="upload-form">
+            <input type="file" name="file" accept=".json.gz,.json,.zip,application/gzip,application/zip" required="required"/>
+            <label class="upload-restore">
+                <input type="checkbox" name="restore" value="true"/>
+                Сразу накатить в базу после загрузки
+            </label>
+            <button type="submit" class="btn-primary">Загрузить</button>
+        </form>
+        <p class="hint">
+            Форматы: <code class="info-code">history-*.json.gz</code> (как при скачивании),
+            распакованный <code class="info-code">.json</code> или <code class="info-code">.zip</code>.
+            Не переименовывайте и не сохраняйте пустой файл — иначе накат удалит все отчёты.
+            Без галочки файл только появится в списке архивов на стенде — накатить можно позже кнопкой «Накатить».
+        </p>
+    </section>
+
+    <section class="tests-block" th:if="${!backups.isEmpty()}">
+        <h2 class="block-title">Архивы</h2>
+        <table class="backup-table">
+            <thead>
+            <tr>
+                <th>Файл</th>
+                <th>Содержимое</th>
+                <th>Размер</th>
+                <th>Дата</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="b : ${backups}">
+                <td><code th:text="${b.fileName}">file.json.gz</code></td>
+                <td>
+                    <span th:if="${b.runCount != null}" th:text="${b.runCount} + ' прогонов, ' + ${b.messageCount} + ' сообщений'">—</span>
+                    <span th:if="${b.runCount == null}">—</span>
+                </td>
+                <td th:text="${#numbers.formatDecimal(b.sizeBytes / 1024.0, 1, 1)} + ' KB'">0 KB</td>
+                <td th:text="${#temporals.format(b.createdAt, 'dd.MM.yyyy HH:mm')}">date</td>
+                <td class="backup-row-actions">
+                    <a th:href="@{/api/backup/{f}/download(f=${b.fileName})}" class="btn-link">Скачать</a>
+                    <form th:action="@{/backup/restore}" method="post" class="inline-form"
+                          th:attr="data-confirm=${b.runCount != null and b.runCount > 0
+                              ? 'Восстановить ' + b.runCount + ' прогонов и ' + b.messageCount + ' сообщений? Текущие данные на Dashboard будут заменены.'
+                              : (b.runCount != null and b.runCount == 0
+                                  ? 'Архив пустой (0 прогонов). Накат удалит все отчёты. Продолжить?'
+                                  : 'Восстановить историю из этого архива? Текущие данные будут заменены.')}"
+                          onsubmit="return confirm(this.dataset.confirm);">
+                        <input type="hidden" name="fileName" th:value="${b.fileName}"/>
+                        <button type="submit" class="btn-danger"
+                                th:disabled="${b.runCount != null and b.runCount == 0}"
+                                th:title="${b.runCount != null and b.runCount == 0} ? 'Пустой архив — накат запрещён' : ''">
+                            Накатить
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="empty-state" th:if="${backups.isEmpty()}">
+        <p th:if="${enabled}">Архивов пока нет. Сохраните историю вручную или дождитесь воскресного расписания (при наличии новых отчётов).</p>
+        <p th:unless="${enabled}">Архивация отключена в конфигурации.</p>
+    </section>
+</main>
+</body>
+</html>

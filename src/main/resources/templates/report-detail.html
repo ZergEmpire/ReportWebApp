@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${run.title} + ' — Report'">Report</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<header class="header">
+    <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
+    <nav class="header-nav">
+        <a th:href="@{/(category=${run.categoryCode})}">Dashboard</a>
+        <a th:href="@{/backup}">Архив истории</a>
+    </nav>
+</header>
+<main class="container report-detail-page">
+    <a class="back-link" th:href="@{/(category=${run.categoryCode})}">← Назад к списку</a>
+
+    <!-- Daily Summary -->
+    <th:block th:if="${run.dailySummary}">
+        <article class="report-hero">
+            <h1><span class="hero-icon">📝</span> SUMMARY <span th:if="${run.summaryDate != null}" th:text="'(' + ${run.summaryDate} + ')'">(date)</span></h1>
+            <p class="hero-meta">
+                <span th:text="${run.categoryIcon + ' ' + run.categoryLabel}">cat</span>
+                · <span th:text="${#temporals.format(run.receivedAt, 'dd.MM.yyyy HH:mm')}">time</span>
+            </p>
+        </article>
+
+        <section class="stats-block">
+            <h2 class="block-title">Статистика за день</h2>
+            <DIV class="stats-row">
+                <DIV class="stat-box"><span class="n" th:text="${run.totalTests}">0</span><span class="l">Итого тестов</span></DIV>
+                <DIV class="stat-box ok"><span class="n" th:text="${run.passedTests}">0</span><span class="l">Пройденных</span></DIV>
+                <DIV class="stat-box fail"><span class="n" th:text="${run.failedTests}">0</span><span class="l">Проваленных</span></DIV>
+                <DIV class="stat-box skip"><span class="n" th:text="${run.skippedTests}">0</span><span class="l">Пропущенных</span></DIV>
+            </DIV>
+            <p class="duration" th:if="${run.executionTime != null}">
+                Время прохождения всех наборов: <strong th:text="${run.executionTime}">00:00:00</strong>
+            </p>
+        </section>
+
+        <section class="tests-block pass-block" th:if="${!run.successfulSuites.isEmpty()}">
+            <h2 class="block-title">✅ Успешно пройденные наборы</h2>
+            <ul class="test-items suite-items">
+                <li th:each="t : ${run.successfulSuites}">
+                    <span class="ti-icon" th:text="${t.icon}">✅</span>
+                    <DIV class="suite-body">
+                        <span class="suite-meta" th:if="${t.meta != null}" th:text="${t.meta}">time</span>
+                        <a th:if="${t.url != null}" th:href="${t.url}" th:text="${t.name}" target="_blank">suite</a>
+                        <span th:if="${t.url == null}" th:text="${t.name}">suite</span>
+                        <code class="suite-path" th:if="${t.path != null}" th:text="${t.path}">path</code>
+                    </DIV>
+                </li>
+            </ul>
+        </section>
+
+        <section class="tests-block fail-block" th:if="${!run.failedSuites.isEmpty()}">
+            <h2 class="block-title">❌ Наборы, пройденные с ошибками</h2>
+            <ul class="test-items suite-items">
+                <li th:each="t : ${run.failedSuites}">
+                    <span class="ti-icon" th:text="${t.icon}">❌</span>
+                    <DIV class="suite-body">
+                        <span class="suite-meta" th:if="${t.meta != null}" th:text="${t.meta}">time</span>
+                        <a th:if="${t.url != null}" th:href="${t.url}" th:text="${t.name}" target="_blank">suite</a>
+                        <span th:if="${t.url == null}" th:text="${t.name}">suite</span>
+                        <code class="suite-path" th:if="${t.path != null}" th:text="${t.path}">path</code>
+                    </DIV>
+                </li>
+            </ul>
+        </section>
+    </th:block>
+
+    <!-- Test run (API, UI, Express, …) -->
+    <th:block th:unless="${run.dailySummary}">
+        <article class="report-hero">
+            <h1><span class="hero-icon">☑️</span> Результаты тестирования приложения appScreener</h1>
+            <p class="hero-meta">
+                <span th:text="${run.categoryIcon + ' ' + run.categoryLabel}">cat</span>
+                · <span th:text="${#temporals.format(run.receivedAt, 'dd.MM.yyyy HH:mm')}">time</span>
+            </p>
+        </article>
+
+        <section class="info-block">
+            <h2 class="block-title">Стенд, где проходил автотест</h2>
+            <a class="info-value link" th:if="${run.standUrl != null}" th:href="${run.standUrl}" th:text="${run.standUrl}" target="_blank">stand</a>
+            <p class="info-value muted" th:if="${run.standUrl == null}">—</p>
+        </section>
+
+        <section class="info-block" th:if="${!run.suiteNames.isEmpty()}">
+            <h2 class="block-title">Название набора</h2>
+            <ul class="info-list">
+                <li th:each="s : ${run.suiteNames}" th:text="${s}">suite</li>
+            </ul>
+        </section>
+
+        <section class="info-block" th:if="${run.ciSuites != null}">
+            <h2 class="block-title">Значение переменной CI_SUITES для запуска Pipeline</h2>
+            <code class="info-code" th:text="${run.ciSuites}">ci</code>
+        </section>
+
+        <section class="stats-block">
+            <h2 class="block-title">Статистика</h2>
+            <DIV class="stats-row">
+                <DIV class="stat-box"><span class="n" th:text="${run.totalTests}">0</span><span class="l">Всего тестов</span></DIV>
+                <DIV class="stat-box ok"><span class="n" th:text="${run.passedTests}">0</span><span class="l">Успешных</span></DIV>
+                <DIV class="stat-box fail"><span class="n" th:text="${run.failedTests}">0</span><span class="l">Проваленных (ошибка)</span></DIV>
+                <DIV class="stat-box skip"><span class="n" th:text="${run.skippedTests}">0</span><span class="l">Не запущенных (системная ошибка)</span></DIV>
+            </DIV>
+            <p class="duration" th:if="${run.executionTime != null}">
+                Время прохождения всех тестов: <strong th:text="${run.executionTime}">00:00:00</strong>
+            </p>
+        </section>
+
+        <DIV class="links-row" th:if="${run.pipelineUrl != null or run.allureUrl != null}">
+            <a th:if="${run.pipelineUrl != null}" th:href="${run.pipelineUrl}" class="btn-link" target="_blank">🔗 Ссылка на Pipeline</a>
+            <a th:if="${run.allureUrl != null}" th:href="${run.allureUrl}" class="btn-link" target="_blank">📊 Ссылка на Allure TestOps</a>
+        </DIV>
+
+        <section class="tests-block fail-block" th:if="${!run.failedTestsList.isEmpty()}">
+            <h2 class="block-title">❌ Упавшие тесты с ошибкой</h2>
+            <p class="hint" th:if="${allureConfigured}">Тесты со ссылкой на Allure TestOps — кнопка загрузки stacktrace через API.</p>
+            <ul class="test-items">
+                <li th:each="t : ${run.failedTestsList}"
+                    th:classappend="${allureConfigured and t.allureTestResultId != null} ? 'test-item-rich' : ''">
+                    <span class="ti-icon" th:text="${t.icon}">❌</span>
+                    <DIV class="test-item-body">
+                        <a th:if="${t.url != null}" th:href="${t.url}" th:text="${t.name}" target="_blank" rel="noopener">test</a>
+                        <span th:if="${t.url == null}" th:text="${t.name}">test</span>
+                        <DIV class="test-item-toolbar" th:if="${allureConfigured and t.allureTestResultId != null}">
+                            <button type="button"
+                                    class="btn-action js-stacktrace-toggle"
+                                    th:attr="data-allure-id=${t.allureTestResultId}"
+                                    aria-expanded="false">
+                                Stacktrace из Allure
+                            </button>
+                        </DIV>
+                        <pre class="raw-block js-stacktrace-panel" hidden="hidden"></pre>
+                    </DIV>
+                </li>
+            </ul>
+        </section>
+
+        <section class="tests-block pass-block" th:if="${!run.passedTestsList.isEmpty()}">
+            <h2 class="block-title">✅ Успешно пройденные тесты</h2>
+            <ul class="test-items">
+                <li th:each="t : ${run.passedTestsList}">
+                    <span class="ti-icon" th:text="${t.icon}">✅</span>
+                    <a th:if="${t.url != null}" th:href="${t.url}" th:text="${t.name}" target="_blank">test</a>
+                    <span th:if="${t.url == null}" th:text="${t.name}">test</span>
+                </li>
+            </ul>
+        </section>
+
+        <section class="tests-block skip-block" th:if="${!run.skippedTestsList.isEmpty()}">
+            <h2 class="block-title">➡️ Тесты, которые не были запущены из-за системной ошибки</h2>
+            <ul class="test-items">
+                <li th:each="t : ${run.skippedTestsList}">
+                    <span class="ti-icon" th:text="${t.icon}">➡️</span>
+                    <a th:if="${t.url != null}" th:href="${t.url}" th:text="${t.name}" target="_blank">test</a>
+                    <span th:if="${t.url == null}" th:text="${t.name}">test</span>
+                </li>
+            </ul>
+        </section>
+    </th:block>
+</main>
+<script th:if="${allureConfigured}" th:src="@{/js/report-detail.js}" defer></script>
+</body>
+</html>

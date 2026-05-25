@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Report Web App</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<header class="header">
+    <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
+    <nav class="header-nav">
+        <a th:href="@{/}" class="active">Dashboard</a>
+        <a th:href="@{/backup}">Архив истории</a>
+    </nav>
+</header>
+<main class="container">
+    <section class="stats-grid">
+        <DIV class="stat-card">
+            <DIV class="label">Прогонов</DIV>
+            <DIV class="value" th:text="${stats.totalReports()}">0</DIV>
+        </DIV>
+        <DIV class="stat-card success">
+            <DIV class="label">Без ошибок</DIV>
+            <DIV class="value" th:text="${stats.successfulRuns()}">0</DIV>
+        </DIV>
+        <DIV class="stat-card danger">
+            <DIV class="label">С ошибками</DIV>
+            <DIV class="value" th:text="${stats.failedRuns()}">0</DIV>
+        </DIV>
+        <DIV class="stat-card">
+            <DIV class="label">Тестов passed</DIV>
+            <DIV class="value" th:text="${stats.totalPassed()}">0</DIV>
+        </DIV>
+        <DIV class="stat-card">
+            <DIV class="label">Тестов failed</DIV>
+            <DIV class="value" th:text="${stats.totalFailed()}">0</DIV>
+        </DIV>
+    </section>
+    <nav class="category-bar">
+        <a th:each="cat : ${categories}"
+           class="category-tab"
+           th:classappend="${selectedCategory == cat.code} ? 'active'"
+           th:href="@{/(category=${cat.code})}"
+           th:text="${cat.displayName()}">cat</a>
+    </nav>
+    <section class="report-list" th:if="${!summaryRuns.isEmpty()}">
+        <a th:each="r : ${summaryRuns}"
+           th:href="@{/report/{id}(id=${r.id})}"
+           class="report-card"
+           th:classappend="${r.pinned} ? 'pinned'">
+            <DIV class="meta">
+                <span>
+                    <span class="badge" th:text="${r.categoryIcon + ' ' + r.categoryLabel}">cat</span>
+                    <span class="badge" th:classappend="${r.success} ? 'ok' : 'fail'"
+                          th:text="${r.failedTests != null and r.failedTests > 0} ? 'есть ошибки' : 'успешно'"></span>
+                    <span class="badge" th:if="${r.pinned}">📌</span>
+                </span>
+                <span class="time" th:text="${#temporals.format(r.receivedAt, 'dd.MM.yyyy HH:mm')}">time</span>
+            </DIV>
+            <h3 th:text="${r.title}">Title</h3>
+            <p class="stats-line" th:if="${r.totalTests != null}">
+                <span class="stat-pill">Всего <strong th:text="${r.totalTests}">0</strong></span>
+                <span class="stat-pill ok">✅ <strong th:text="${r.passedTests}">0</strong></span>
+                <span class="stat-pill fail">❌ <strong th:text="${r.failedTests}">0</strong></span>
+                <span class="stat-pill skip">⏭ <strong th:text="${r.skippedTests}">0</strong></span>
+                <span class="stat-pill" th:if="${r.executionTime != null}">⏱ <strong th:text="${r.executionTime}">00:00:00</strong></span>
+            </p>
+            <p class="stats-line subtle" th:if="${r.standUrl != null}" th:text="${r.standUrl}"></p>
+            <p class="stats-line subtle" th:if="${r.ciSuites != null}" th:text="'CI: ' + ${r.ciSuites}"></p>
+        </a>
+    </section>
+    <section class="empty-state" th:if="${summaryRuns.isEmpty()}">
+        <p>В категории пока нет прогонов.</p>
+        <p th:if="${!runs.isEmpty()}" class="hint">В базе есть служебные сообщения, но нет сводных отчётов — попробуйте «Все» или накатите архив из <a th:href="@{/backup}">Архива истории</a>.</p>
+    </section>
+</main>
+</body>
+</html>

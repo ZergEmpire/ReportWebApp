@@ -1,0 +1,18 @@
+☑️ Результаты тестирования приложения appScreener.
+========================
+*Стенд, где проходил автотест: \n*
+`https://api-stand.dev.example.com`
+*Название набора: \n*
+`ApiSuiteStart`
+*Значение переменной CI_SUITES для запуска Pipeline:\n*
+`Patch/ApiSuiteStart.xml`
+========================
+*Статистика:\n*
+Всего тестов: 24
+Успешных: 24
+Проваленных (ошибка): 0
+Не запущенных (системная ошибка): 0
+Время прохождения всех тестов: 00:45:12
+
+[🔗 Ссылка на Pipeline](https://gitlab.example.com/jobs/2001)
+[📊 Ссылка на Allure TestOps](https://dersecur.testops.cloud/launch/2001)

@@ -1,0 +1,5 @@
+========================
+*Упавшие тесты с ошибкой:*
+========================
+❌ [pygoat.zip — референс OSA](https://dersecur.testops.cloud/launch/59211/tree/117352)
+❌ [Damn_Vulnerable_C — broken](https://dersecur.testops.cloud/launch/59211/tree/117360)

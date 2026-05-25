@@ -1,0 +1,18 @@
+☑️ Результаты тестирования приложения appScreener.
+========================
+*Стенд, где проходил автотест: \n*
+`https://updates-stand.example.com`
+*Название набора: \n*
+`ScaDatabaseUpdateSuite`
+*Значение переменной CI_SUITES для запуска Pipeline:\n*
+`Patch/ScaUpdateCheck.xml`
+========================
+*Статистика:\n*
+Всего тестов: 12
+Успешных: 12
+Проваленных (ошибка): 0
+Не запущенных (системная ошибка): 0
+Время прохождения всех тестов: 00:18:55
+
+[🔗 Ссылка на Pipeline](https://gitlab.example.com/jobs/2006)
+[📊 Ссылка на Allure TestOps](https://dersecur.testops.cloud/launch/2006)

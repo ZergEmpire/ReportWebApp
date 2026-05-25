@@ -1,0 +1,13 @@
+☑️ Результаты тестирования приложения appScreener (тест stacktrace, launch 59211).
+========================
+*Стенд:* `https://appscreener-ui01d.ast.rt-solar.ru`
+*CI_SUITES:* `Express/ExpressOsa.xml`
+========================
+*Статистика:*
+Всего тестов: 2
+Успешных: 0
+Проваленных (ошибка): 2
+Не запущенных (системная ошибка): 0
+Время прохождения всех тестов: 00:05:00
+
+[📊 Ссылка на Allure TestOps](https://dersecur.testops.cloud/launch/59211)

@@ -1,0 +1,18 @@
+☑️ Результаты тестирования приложения appScreener.
+========================
+*Стенд, где проходил автотест: \n*
+`https://ai-lab.example.com`
+*Название набора: \n*
+`AiAnalyseExperimental`
+*Значение переменной CI_SUITES для запуска Pipeline:\n*
+`Experimental/AiSuite.xml`
+========================
+*Статистика:\n*
+Всего тестов: 9
+Успешных: 6
+Проваленных (ошибка): 3
+Не запущенных (системная ошибка): 0
+Время прохождения всех тестов: 00:31:08
+
+[🔗 Ссылка на Pipeline](https://gitlab.example.com/jobs/2007)
+[📊 Ссылка на Allure TestOps](https://dersecur.testops.cloud/launch/2007)
