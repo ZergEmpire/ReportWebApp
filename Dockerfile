@@ -11,12 +11,16 @@ FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 RUN useradd --system --uid 1000 --create-home appuser \
-    && mkdir -p /app/data /app/backups \
+    && mkdir -p /app/data /app/backups /data \
     && chown -R appuser:appuser /app
 
 COPY --from=build /app/target/report-web-app-*.jar /app/app.jar
-USER appuser
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Amvera: профиль amvera + /data; docker compose переопределяет на docker
+ENV SPRING_PROFILES_ACTIVE=amvera
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

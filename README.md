@@ -57,6 +57,23 @@ docker compose down -v
 
 Локальный `application-local.properties` можно смонтировать в контейнер (см. комментарий в `docker-compose.yml`).
 
+## Деплой на Amvera
+
+Сборка по `Dockerfile` у вас уже проходит. Чтобы приложение **не останавливалось** после старта, в панели Amvera (вкладка «Конфигурация») проверьте:
+
+| Параметр | Значение |
+|----------|----------|
+| Окружение / инструмент | `docker` |
+| `dockerfile` | `Dockerfile` |
+| **`command`** | **пусто** (не `docker compose up` — Compose на Amvera [не поддерживается](https://docs.amvera.ru/applications/configuration/docker.html)) |
+| `args` | пусто |
+| `persistenceMount` | `/data` |
+| Порт контейнера | **8080** (в UI или в `amvera.yaml`: `containerPort: 8080`) |
+
+В репозитории лежит **`amvera.yaml`** с этими настройками — после `git push` Amvera подхватит конфиг из git (или скопируйте значения вручную и **очистите** поле command).
+
+БД H2 и архивы пишутся в постоянное хранилище `/data` (профиль `amvera`). Токен Allure — переменная окружения `ALLURE_TESTOPS_TOKEN` в настройках проекта Amvera.
+
 ## Быстрый старт (локально)
 
 ### 1. Сборка
@@ -267,6 +284,7 @@ curl -F "file=@history-20260521-120000.json.gz" "http://localhost:8080/api/backu
 | Пустой Dashboard без демо | Запустите с `-Dreport.seed-demo=true` или дождитесь отчётов от автотестов |
 | Ошибка при `seed-demo` | Пересоберите `mvn package` после изменений в `seed-payloads/` |
 | Битая БД | Остановить app → удалить `data/` → запустить снова |
+| Amvera: «работает с ошибкой», сразу Shutdown | Очистить `command` (не `docker compose up`), порт **8080**, данные в `/data` |
 
 ## MVP ограничения
 
