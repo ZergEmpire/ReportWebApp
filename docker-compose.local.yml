@@ -1,0 +1,12 @@
+# Локальная разработка: именованные тома для H2 и бэкапов (не используется на Timeweb).
+services:
+  report-web-app:
+    image: report-web-app:local
+    volumes:
+      - report-data:/app/data
+      - report-backups:/app/backups
+    restart: unless-stopped
+
+volumes:
+  report-data:
+  report-backups:

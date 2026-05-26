@@ -1,24 +1,13 @@
+# Базовый compose для Timeweb App Platform (Docker Compose).
+# В манифесте нельзя использовать volumes — см. https://timeweb.cloud/docs/apps/deploying-with-docker-compose
+# Локально с постоянными томами: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+
 services:
   report-web-app:
     build: .
-    image: report-web-app:local
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      # Демо-отчёты при первом запуске: REPORT_SEED_DEMO=true docker compose up
       REPORT_SEED_DEMO: "${REPORT_SEED_DEMO:-false}"
-      # Токен Allure TestOps (опционально)
       ALLURE_TESTOPS_TOKEN: "${ALLURE_TESTOPS_TOKEN:-}"
-    volumes:
-      - report-data:/app/data
-      - report-backups:/app/backups
-    # application-local.properties с хоста (если файл есть)
-    # раскомментируйте при необходимости:
-    # volumes:
-    #   - ./application-local.properties:/app/application-local.properties:ro
-    restart: unless-stopped
-
-volumes:
-  report-data:
-  report-backups:

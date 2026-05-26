@@ -24,8 +24,10 @@ java -version
 
 Требуется **Docker** и **Docker Compose** v2.
 
+**Локально** (с постоянными томами для H2):
+
 ```bash
-docker compose up --build
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 Приложение: http://localhost:8080
@@ -33,29 +35,44 @@ docker compose up --build
 **С демо-отчётами** (первый запуск с примерами в Dashboard):
 
 ```bash
-REPORT_SEED_DEMO=true docker compose up --build
+REPORT_SEED_DEMO=true docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 PowerShell:
 
 ```powershell
 $env:REPORT_SEED_DEMO = "true"
-docker compose up --build
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 **Токен Allure TestOps** (опционально):
 
 ```bash
-ALLURE_TESTOPS_TOKEN=ваш-токен docker compose up --build
+ALLURE_TESTOPS_TOKEN=ваш-токен docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 Данные H2 и архивы хранятся в именованных томах Docker (`report-data`, `report-backups`). Сброс БД:
 
 ```bash
-docker compose down -v
+docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 ```
 
-Локальный `application-local.properties` можно смонтировать в контейнер (см. комментарий в `docker-compose.yml`).
+## Деплой на Timeweb Cloud (App Platform, Docker Compose)
+
+В корне репозитория лежит **`docker-compose.yml`** без `volumes` — это требование [документации Timeweb](https://timeweb.cloud/docs/apps/deploying-with-docker-compose) (иначе сборка падает).
+
+| Параметр в панели | Значение |
+|-------------------|----------|
+| Тип | Docker → **Docker Compose** |
+| Репозиторий | `ReportWebApp`, ветка `main` |
+| Порт приложения | **8080** (первый сервис в compose проксируется на домен) |
+| Регион | Россия |
+
+Переменные в панели (по желанию): `ALLURE_TESTOPS_TOKEN`, `REPORT_SEED_DEMO=true`.
+
+**Данные H2:** без томов в compose БД живёт внутри контейнера и **сбрасывается при пересборке**. Для постоянного диска уточните в поддержке Timeweb опцию persistent storage для App Platform или позже перейдите на PostgreSQL.
+
+После `git push` нажмите **Перезапустить деплой** в панели.
 
 ## Быстрый старт (локально)
 
