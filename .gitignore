@@ -2,4 +2,5 @@
 /backups/
 /target/
 application-local.properties
+.idea/
 appscreener/
