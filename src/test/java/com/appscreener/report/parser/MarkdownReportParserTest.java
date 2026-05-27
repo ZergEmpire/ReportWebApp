@@ -53,6 +53,29 @@ class MarkdownReportParserTest {
     }
 
     @Test
+    void parseCiSummaryWithNewlineInsideStandBackticks() {
+        String text = """
+                ☑️ Результаты тестирования приложения appScreener.
+                ========================
+                *Стенд, где проходил автотест: \n*
+                `https://appscreener-auto-ui01qa.ast.rt-solar.ru
+                `
+                *Название набора: \n*
+                `Smoke Suite`
+                *Статистика:\n*
+                Всего тестов: 10
+                Успешных: 7
+                Проваленных (ошибка): 3
+                Не запущенных (системная ошибка): 0
+                """;
+        ParsedReport report = parser.parse(text, "release");
+        assertEquals(ReportType.TEST_RUN_SUMMARY, report.getReportType());
+        assertEquals("https://appscreener-auto-ui01qa.ast.rt-solar.ru", report.getStandUrl());
+        assertEquals(10, report.getTotalTests());
+        assertEquals(3, report.getFailedTests());
+    }
+
+    @Test
     void parseFailedTestLineExtractsAllureTestResultId() {
         String text = "❌ [Broken test](https://dersecur.testops.cloud/launch/42/tree/5778)";
         ParsedReport report = parser.parse(text, "express");

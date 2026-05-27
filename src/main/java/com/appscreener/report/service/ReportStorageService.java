@@ -167,24 +167,64 @@ public class ReportStorageService {
         if (!isSummaryType(parsed.getReportType()) && parsed.getReportType() != ReportType.UNKNOWN) {
             return;
         }
+        // Служебные сообщения (ссылка на Report Web App и т.п.) — UNKNOWN без полей сводки; не затираем run
+        if (parsed.getReportType() == ReportType.UNKNOWN && !hasSummaryPayload(parsed)) {
+            return;
+        }
         if (parsed.getReportType() != ReportType.UNKNOWN) {
             run.setReportType(parsed.getReportType());
-            run.setTitle(parsed.getTitle());
+            if (parsed.getTitle() != null) {
+                run.setTitle(parsed.getTitle());
+            }
         }
-        run.setStandUrl(parsed.getStandUrl());
+        if (parsed.getStandUrl() != null && !parsed.getStandUrl().isBlank()) {
+            run.setStandUrl(parsed.getStandUrl().trim());
+        }
         if (!parsed.getSuiteNames().isEmpty()) {
             run.setSuiteNamesJson(JsonUtil.toJson(parsed.getSuiteNames()));
         }
-        run.setCiSuites(parsed.getCiSuites());
-        run.setTotalTests(parsed.getTotalTests());
-        run.setPassedTests(parsed.getPassedTests());
-        run.setFailedTests(parsed.getFailedTests());
-        run.setSkippedTests(parsed.getSkippedTests());
-        run.setExecutionTime(parsed.getExecutionTime());
-        run.setPipelineUrl(parsed.getPipelineUrl());
-        run.setAllureUrl(parsed.getAllureUrl());
-        run.setSummaryDate(parsed.getSummaryDate());
+        if (parsed.getCiSuites() != null) {
+            run.setCiSuites(parsed.getCiSuites());
+        }
+        if (parsed.getTotalTests() != null) {
+            run.setTotalTests(parsed.getTotalTests());
+        }
+        if (parsed.getPassedTests() != null) {
+            run.setPassedTests(parsed.getPassedTests());
+        }
+        if (parsed.getFailedTests() != null) {
+            run.setFailedTests(parsed.getFailedTests());
+        }
+        if (parsed.getSkippedTests() != null) {
+            run.setSkippedTests(parsed.getSkippedTests());
+        }
+        if (parsed.getExecutionTime() != null) {
+            run.setExecutionTime(parsed.getExecutionTime());
+        }
+        if (parsed.getPipelineUrl() != null) {
+            run.setPipelineUrl(parsed.getPipelineUrl());
+        }
+        if (parsed.getAllureUrl() != null) {
+            run.setAllureUrl(parsed.getAllureUrl());
+        }
+        if (parsed.getSummaryDate() != null) {
+            run.setSummaryDate(parsed.getSummaryDate());
+        }
         testRunRepository.save(run);
+    }
+
+    private static boolean hasSummaryPayload(ParsedReport parsed) {
+        return (parsed.getStandUrl() != null && !parsed.getStandUrl().isBlank())
+                || !parsed.getSuiteNames().isEmpty()
+                || (parsed.getCiSuites() != null && !parsed.getCiSuites().isBlank())
+                || parsed.getTotalTests() != null
+                || parsed.getPassedTests() != null
+                || parsed.getFailedTests() != null
+                || parsed.getSkippedTests() != null
+                || parsed.getExecutionTime() != null
+                || parsed.getPipelineUrl() != null
+                || parsed.getAllureUrl() != null
+                || parsed.getSummaryDate() != null;
     }
 
     private TestRunDetailView buildDetailView(TestRunEntity run) {

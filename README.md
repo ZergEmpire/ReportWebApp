@@ -68,7 +68,14 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 | Порт приложения | **8080** (первый сервис в compose проксируется на домен) |
 | Регион | Россия |
 
-Переменные в панели (по желанию): `ALLURE_TESTOPS_TOKEN`, `REPORT_SEED_DEMO=true`.
+Переменные в панели (по желанию):
+
+| Переменная | Назначение |
+|------------|------------|
+| `ALLURE_TESTOPS_TOKEN` | **Обязательно для кнопки stacktrace** на странице прогона (API token из Allure TestOps) |
+| `REPORT_SEED_DEMO` | `true` — демо-данные при старте |
+
+Без `ALLURE_TESTOPS_TOKEN` упавшие тесты отображаются, но кнопка «Stacktrace из Allure» скрыта.
 
 **Данные H2:** без томов в compose БД живёт внутри контейнера и **сбрасывается при пересборке**. Для постоянного диска уточните в поддержке Timeweb опцию persistent storage для App Platform или позже перейдите на PostgreSQL.
 

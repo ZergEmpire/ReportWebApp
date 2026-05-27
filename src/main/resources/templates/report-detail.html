@@ -120,6 +120,7 @@
         <section class="tests-block fail-block" th:if="${!run.failedTestsList.isEmpty()}">
             <h2 class="block-title">❌ Упавшие тесты с ошибкой</h2>
             <p class="hint" th:if="${allureConfigured}">Тесты со ссылкой на Allure TestOps — кнопка загрузки stacktrace через API.</p>
+            <p class="hint muted" th:if="${!allureConfigured}">Stacktrace из Allure недоступен: на сервере не задан <code>ALLURE_TESTOPS_TOKEN</code>.</p>
             <ul class="test-items">
                 <li th:each="t : ${run.failedTestsList}"
                     th:classappend="${allureConfigured and t.allureTestResultId != null} ? 'test-item-rich' : ''">

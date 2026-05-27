@@ -135,13 +135,7 @@ public class MarkdownReportParser {
 
     private void parseTestRunSummary(String text, ParsedReport report) {
         String normalized = text.replace("\r\n", "\n");
-        report.setStandUrl(extractBacktickBlock(normalized, "Стенд, где проходил автотест"));
-        if (report.getStandUrl() == null) {
-            Matcher urlMatcher = Pattern.compile("`(https?://[^`\\s]+)`").matcher(normalized);
-            if (urlMatcher.find()) {
-                report.setStandUrl(urlMatcher.group(1));
-            }
-        }
+        report.setStandUrl(parseStandUrl(normalized));
         String suitesBlock = extractBacktickBlock(normalized, "Название набора");
         if (suitesBlock != null) {
             for (String line : suitesBlock.split("\n")) {
@@ -248,6 +242,29 @@ public class MarkdownReportParser {
                 report.setAllureUrl(url);
             }
         }
+    }
+
+    private String parseStandUrl(String text) {
+        String stand = extractBacktickBlock(text, "Стенд, где проходил автотест");
+        if (stand == null) {
+            stand = extractBacktickBlock(text, "Стенд");
+        }
+        if (stand != null) {
+            return normalizeUrlToken(stand);
+        }
+        Matcher urlMatcher = Pattern.compile("`(https?://[^`]+)`").matcher(text);
+        if (urlMatcher.find()) {
+            return normalizeUrlToken(urlMatcher.group(1));
+        }
+        return null;
+    }
+
+    private static String normalizeUrlToken(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String cleaned = raw.trim().replaceAll("[\\r\\n]+", "");
+        return cleaned.isEmpty() ? null : cleaned;
     }
 
     private String extractBacktickBlock(String text, String labelPart) {
