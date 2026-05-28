@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Авторизация — Report Web App</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<header class="header">
+    <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
+</header>
+<main class="container auth-page">
+    <article class="report-hero">
+        <h1><span class="hero-icon">🔐</span> Доступ к Report Web App</h1>
+        <p class="hero-meta">Для просмотра отчётов нужен ключ доступа или учётная запись администратора.</p>
+    </article>
+
+    <DIV class="flash" th:if="${message != null}" th:classappend="${messageType}">
+        <span th:text="${message}">msg</span>
+    </DIV>
+
+    <section class="info-block auth-card">
+        <h2 class="block-title">Вход по ключу доступа</h2>
+        <form th:action="@{/auth/access}" method="post" class="auth-form">
+            <label class="auth-label" for="accessKey">Ключ</label>
+            <input id="accessKey" name="accessKey" class="auth-input" type="password" required="required"
+                   autocomplete="one-time-code" placeholder="Вставьте выданный ключ"/>
+            <button class="btn-primary" type="submit">Войти</button>
+        </form>
+        <p class="hint">
+            Если у вас нет ключа, обратитесь к администратору:
+            <a th:href="'mailto:' + ${adminContactEmail}" th:text="${adminContactEmail}">s.kavalerov@rt-solar.ru</a>.
+        </p>
+    </section>
+
+    <section class="info-block auth-card">
+        <h2 class="block-title">Вход администратора</h2>
+        <form th:action="@{/auth/admin}" method="post" class="auth-form">
+            <label class="auth-label" for="username">Логин</label>
+            <input id="username" name="username" class="auth-input" type="text" required="required" autocomplete="username"/>
+            <label class="auth-label" for="password">Пароль</label>
+            <input id="password" name="password" class="auth-input" type="password" required="required"
+                   autocomplete="current-password"/>
+            <button class="btn-primary" type="submit">Войти как администратор</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

@@ -3,4 +3,4 @@
 /target/
 application-local.properties
 .idea/
-appscreener/
+/appscreener/

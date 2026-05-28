@@ -561,6 +561,7 @@ a:hover {
     display: flex;
     gap: 1.25rem;
     font-size: 0.95rem;
+    align-items: center;
 }
 
 .header-nav a {
@@ -577,6 +578,15 @@ a:hover {
 .header-nav a.active {
     border-bottom: 2px solid var(--gold);
     padding-bottom: 0.15rem;
+}
+
+.header-nav .inline-form {
+    margin: 0;
+}
+
+.header-nav .btn-action {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
 }
 
 .backup-page .info-list.compact li {
@@ -691,4 +701,38 @@ a:hover {
 
 .upload-block {
     margin-top: 1.5rem;
+}
+
+.auth-page {
+    max-width: 860px;
+}
+
+.auth-card {
+    margin-bottom: 1.2rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.auth-label {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+}
+
+.auth-input {
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #08080a;
+    color: var(--text);
+    padding: 0.55rem 0.65rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+.auth-input:focus {
+    outline: 1px solid var(--gold-dim);
+    border-color: var(--gold);
 }

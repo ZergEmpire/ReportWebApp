@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Ключ доступа — Report Web App</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<header class="header">
+    <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
+    <nav class="header-nav">
+        <a th:href="@{/}">Dashboard</a>
+        <a th:href="@{/backup}">Архив истории</a>
+        <a th:href="@{/auth/admin/key}" class="active">Ключ доступа</a>
+        <form th:action="@{/auth/logout}" method="post" class="inline-form">
+            <button type="submit" class="btn-action">Выйти</button>
+        </form>
+    </nav>
+</header>
+<main class="container auth-page">
+    <a class="back-link" th:href="@{/}">← Назад к Dashboard</a>
+
+    <article class="report-hero">
+        <h1><span class="hero-icon">🛡️</span> Управление ключом доступа</h1>
+        <p class="hero-meta">При генерации нового ключа все сессии, вошедшие по старому ключу, отключаются автоматически.</p>
+    </article>
+
+    <DIV class="flash" th:if="${message != null}" th:classappend="${messageType}">
+        <span th:text="${message}">msg</span>
+    </DIV>
+
+    <section class="info-block auth-card">
+        <h2 class="block-title">Текущий ключ</h2>
+        <code class="info-code" th:text="${activeKey}">key</code>
+        <p class="hint">Версия ключа: <strong th:text="${keyVersion}">1</strong></p>
+    </section>
+
+    <section class="info-block auth-card">
+        <h2 class="block-title">Сгенерировать новый ключ</h2>
+        <form th:action="@{/auth/admin/key/rotate}" method="post">
+            <button type="submit" class="btn-danger">Сгенерировать и отключить старый ключ</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

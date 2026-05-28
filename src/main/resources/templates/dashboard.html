@@ -12,6 +12,10 @@
     <nav class="header-nav">
         <a th:href="@{/}" class="active">Dashboard</a>
         <a th:href="@{/backup}">Архив истории</a>
+        <a th:if="${isAdminSession}" th:href="@{/auth/admin/key}">Ключ доступа</a>
+        <form th:if="${authEnabled}" th:action="@{/auth/logout}" method="post" class="inline-form">
+            <button type="submit" class="btn-action">Выйти</button>
+        </form>
     </nav>
 </header>
 <main class="container">
