@@ -72,7 +72,7 @@
     </section>
     <section class="empty-state" th:if="${summaryRuns.isEmpty()}">
         <p>В категории пока нет прогонов.</p>
-        <p th:if="${!runs.isEmpty()}" class="hint">В базе есть служебные сообщения, но нет сводных отчётов — попробуйте «Все» или накатите архив из <a th:href="@{/backup}">Архива истории</a>.</p>
+        <p th:if="${!runs.isEmpty()}" class="hint">В базе есть служебные сообщения, но нет сводных отчётов — попробуйте «Все» или восстановите архив из <a th:href="@{/backup}">Архива истории</a>.</p>
     </section>
 </main>
 </body>

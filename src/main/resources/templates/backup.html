@@ -30,7 +30,7 @@
         <h2 class="block-title">Зачем это нужно</h2>
         <ul class="info-list compact">
             <li>Сохранить историю автотестов в лёгком формате <code class="info-code">history-*.json.gz</code> (JSON + сжатие).</li>
-            <li>При сбое или миграции — <strong>накатить</strong> архив обратно без перезапуска сервера.</li>
+            <li>При сбое или миграции — <strong>восстановить</strong> данные из архива без перезапуска сервера.</li>
             <li>Плановый архив <strong>раз в неделю</strong> и только если данные изменились — без лишней нагрузки.</li>
         </ul>
     </section>
@@ -50,7 +50,7 @@
         <form th:action="@{/backup/create}" method="post">
             <button type="submit" class="btn-primary">Сохранить историю сейчас</button>
         </form>
-        <p class="hint">Перед накатом из списка создаётся страховочный архив текущих данных (если они есть).</p>
+        <p class="hint">Перед восстановлением из списка создаётся страховочный архив текущих данных (если они есть).</p>
     </section>
 
     <section class="tests-block upload-block" th:if="${enabled}">
@@ -59,15 +59,15 @@
             <input type="file" name="file" accept=".json.gz,.json,.zip,application/gzip,application/zip" required="required"/>
             <label class="upload-restore">
                 <input type="checkbox" name="restore" value="true"/>
-                Сразу накатить в базу после загрузки
+                Сразу восстановить данные из архива после загрузки
             </label>
             <button type="submit" class="btn-primary">Загрузить</button>
         </form>
         <p class="hint">
             Форматы: <code class="info-code">history-*.json.gz</code> (как при скачивании),
             распакованный <code class="info-code">.json</code> или <code class="info-code">.zip</code>.
-            Не переименовывайте и не сохраняйте пустой файл — иначе накат удалит все отчёты.
-            Без галочки файл только появится в списке архивов на стенде — накатить можно позже кнопкой «Накатить».
+            Не переименовывайте и не сохраняйте пустой файл — иначе восстановление удалит все отчёты.
+            Без галочки файл только появится в списке архивов на стенде — восстановить можно позже кнопкой «Восстановить».
         </p>
     </section>
 
@@ -98,14 +98,14 @@
                           th:attr="data-confirm=${b.runCount != null and b.runCount > 0
                               ? 'Восстановить ' + b.runCount + ' прогонов и ' + b.messageCount + ' сообщений? Текущие данные на Dashboard будут заменены.'
                               : (b.runCount != null and b.runCount == 0
-                                  ? 'Архив пустой (0 прогонов). Накат удалит все отчёты. Продолжить?'
+                                  ? 'Архив пустой (0 прогонов). Восстановление удалит все отчёты. Продолжить?'
                                   : 'Восстановить историю из этого архива? Текущие данные будут заменены.')}"
                           onsubmit="return confirm(this.dataset.confirm);">
                         <input type="hidden" name="fileName" th:value="${b.fileName}"/>
                         <button type="submit" class="btn-danger"
                                 th:disabled="${b.runCount != null and b.runCount == 0}"
-                                th:title="${b.runCount != null and b.runCount == 0} ? 'Пустой архив — накат запрещён' : ''">
-                            Накатить
+                                th:title="${b.runCount != null and b.runCount == 0} ? 'Пустой архив — восстановление запрещено' : ''">
+                            Восстановить
                         </button>
                     </form>
                 </td>

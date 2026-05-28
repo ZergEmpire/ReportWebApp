@@ -198,9 +198,9 @@ POST|GET {REPORT_WEB_APP_URL}/pinChatMessage?message_id={id}
 | GET | `/api/stats` | Сводная статистика (`?category=…`) |
 | GET | `/api/backup` | Список архивов истории |
 | POST | `/api/backup` | Сохранить историю сейчас |
-| POST | `/api/backup/upload` | Загрузить `.json.gz` или `.zip` (`file`, `restore=true` — сразу накатить) |
+| POST | `/api/backup/upload` | Загрузить `.json.gz` или `.zip` (`file`, `restore=true` — сразу восстановить данные) |
 | GET | `/api/backup/{fileName}/download` | Скачать архив |
-| POST | `/api/backup/restore/{fileName}` | Накатить архив из каталога на сервере |
+| POST | `/api/backup/restore/{fileName}` | Восстановить архив из каталога на сервере |
 | GET | `/api/allure/testresult/{id}` | Детали теста из Allure TestOps (message, stacktrace) |
 | GET | `/api/allure/status` | Настроен ли токен Allure |
 
