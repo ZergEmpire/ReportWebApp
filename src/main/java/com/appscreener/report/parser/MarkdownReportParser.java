@@ -145,6 +145,9 @@ public class MarkdownReportParser {
                 }
             }
         }
+        if (!report.getSuiteNames().isEmpty()) {
+            report.setTitle(report.getSuiteNames().get(0) + " (appScreener)");
+        }
         report.setCiSuites(extractBacktickBlock(normalized, "CI_SUITES"));
         if (report.getCiSuites() == null) {
             report.setCiSuites(extractBacktickBlock(normalized, "CI_SUITES для запуска Pipeline"));

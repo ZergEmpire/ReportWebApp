@@ -25,6 +25,7 @@ class MarkdownReportParserTest {
         assertEquals(13, report.getPassedTests());
         assertEquals(4, report.getFailedTests());
         assertEquals(0, report.getSkippedTests());
+        assertEquals("Набор для smoke check (appScreener)", report.getTitle());
         assertNotNull(report.getStandUrl());
         assertEquals("https://appscreener-ui01d.ast.rt-solar.ru", report.getStandUrl());
     }
@@ -70,6 +71,7 @@ class MarkdownReportParserTest {
                 """;
         ParsedReport report = parser.parse(text, "release");
         assertEquals(ReportType.TEST_RUN_SUMMARY, report.getReportType());
+        assertEquals("Smoke Suite (appScreener)", report.getTitle());
         assertEquals("https://appscreener-auto-ui01qa.ast.rt-solar.ru", report.getStandUrl());
         assertEquals(10, report.getTotalTests());
         assertEquals(3, report.getFailedTests());
