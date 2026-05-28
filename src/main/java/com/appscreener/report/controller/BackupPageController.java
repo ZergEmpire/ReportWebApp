@@ -65,7 +65,7 @@ public class BackupPageController {
                 return "redirect:/backup";
             }
             var info = backupService.uploadArchive(file.getInputStream(), file.getOriginalFilename(), restore);
-            String action = restore ? "загружен и накатан" : "загружен в каталог backups";
+            String action = restore ? "загружен и восстановлен" : "загружен в каталог backups";
             flash.addFlashAttribute("message",
                     "Архив " + action + ": " + info.getFileName() + " ("
                             + info.getRunCount() + " прогонов, " + info.getMessageCount() + " сообщений)");

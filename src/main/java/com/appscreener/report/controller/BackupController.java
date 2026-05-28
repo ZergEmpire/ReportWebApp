@@ -80,7 +80,7 @@ public class BackupController {
                 "restored", restore,
                 "backup", info,
                 "message", restore
-                        ? "Архив загружен и накатан: " + info.getFileName()
+                        ? "Архив загружен и восстановлен: " + info.getFileName()
                         : "Архив загружен: " + info.getFileName()
         ));
     }
