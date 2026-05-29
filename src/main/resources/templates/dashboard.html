@@ -49,8 +49,7 @@
         <a th:each="r : ${summaryRuns}"
            th:href="@{/report/{id}(id=${r.id})}"
            class="report-card"
-           th:classappend="${r.pinned} ? 'pinned'"
-           th:classappend="${r.notification} ? 'notification-card'">
+           th:classappend="${(r.pinned ? 'pinned' : '') + (r.notification ? ' notification-card' : '')}">
             <DIV class="meta">
                 <span>
                     <span class="badge" th:text="${r.categoryIcon + ' ' + r.categoryLabel}">cat</span>
