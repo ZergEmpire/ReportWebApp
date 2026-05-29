@@ -48,8 +48,7 @@
     <section class="report-list" th:if="${!summaryRuns.isEmpty()}">
         <a th:each="r : ${summaryRuns}"
            th:href="@{/report/{id}(id=${r.id})}"
-           class="report-card"
-           th:classappend="${(r.pinned ? 'pinned' : '') + (r.notification ? ' notification-card' : '')}">
+           th:class="${r.cardClasses}">
             <DIV class="meta">
                 <span>
                     <span class="badge" th:text="${r.categoryIcon + ' ' + r.categoryLabel}">cat</span>

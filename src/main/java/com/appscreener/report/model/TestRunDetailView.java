@@ -48,6 +48,17 @@ public class TestRunDetailView {
         return failedTests == null || failedTests == 0;
     }
 
+    public String getCardClasses() {
+        StringBuilder css = new StringBuilder("report-card");
+        if (pinned) {
+            css.append(" pinned");
+        }
+        if (isNotification()) {
+            css.append(" notification-card");
+        }
+        return css.toString();
+    }
+
     public String getId() {
         return id;
     }
