@@ -9,24 +9,15 @@
 <body>
 <header class="header">
     <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
-    <nav class="header-nav">
-        <a th:href="@{/}">Dashboard</a>
-        <a th:href="@{/backup}">Архив истории</a>
-        <a th:href="@{/auth/admin/key}">Ключ доступа</a>
-        <a th:href="@{/auth/admin/categories}" class="active">Категории</a>
-        <form th:action="@{/auth/logout}" method="post" class="inline-form">
-            <button type="submit" class="btn-action">Выйти</button>
-        </form>
-    </nav>
+    <nav th:replace="~{fragments/header-nav :: main('admin-categories')}"></nav>
 </header>
-<main class="container auth-page">
+<main class="container admin-page">
     <a class="back-link" th:href="@{/}">← Назад к Dashboard</a>
 
     <article class="report-hero">
-        <h1><span class="hero-icon">🏷️</span> Категории отчётов</h1>
+        <h1><span class="hero-icon">🏷️</span> Управление категориями</h1>
         <p class="hero-meta">
-            Новая категория появляется на Dashboard и принимает отчёты с тем же
-            <code>message_thread_id</code>, что вы укажете ниже. Встроенные категории (API, UI, …) менять нельзя.
+            Создавайте вкладки на Dashboard для новых типов отчётов. Встроенные категории (API, UI, …) изменить нельзя.
         </p>
     </article>
 
@@ -34,56 +25,91 @@
         <span th:text="${message}">msg</span>
     </DIV>
 
-    <section class="info-block auth-card">
-        <h2 class="block-title">Создать категорию</h2>
-        <form th:action="@{/auth/admin/categories}" method="post" class="category-form">
-            <label>
-                <span>Название (вкладка на Dashboard)</span>
-                <input type="text" name="label" required maxlength="120" placeholder="Например: Security scan"/>
-            </label>
-            <label>
-                <span>Код (латиница, для URL <code>?category=</code>)</span>
-                <input type="text" name="code" required maxlength="32" pattern="[a-z][a-z0-9-]{1,30}"
-                       placeholder="security"/>
-            </label>
-            <label>
-                <span>message_thread_id (в запросах автотестов)</span>
-                <input type="text" name="threadId" required maxlength="64" pattern="[a-zA-Z0-9_-]{1,64}"
-                       placeholder="9001"/>
-            </label>
-            <label>
-                <span>Иконка</span>
-                <select name="icon" required>
-                    <option th:each="ico : ${iconOptions}" th:value="${ico}" th:text="${ico}">🔒</option>
-                </select>
-            </label>
-            <button type="submit" class="btn-action">Создать категорию</button>
-        </form>
-        <p class="hint">
-            После создания в CI передайте в <code>sendMessage</code> параметр
-            <code>message_thread_id</code> с указанным значением — отчёты попадут в новую вкладку.
-        </p>
-    </section>
+    <div class="admin-grid">
+        <section class="info-block auth-card">
+            <h2 class="block-title">Новая категория</h2>
+            <form th:action="@{/auth/admin/categories}" method="post" class="category-form" id="category-create-form">
+                <label>
+                    <span>Название вкладки</span>
+                    <input type="text" name="label" required maxlength="120" placeholder="Например: Security scan"/>
+                </label>
+                <label>
+                    <span>Код (<code>?category=</code>)</span>
+                    <input type="text" name="code" required maxlength="32" pattern="[a-z][a-z0-9-]{1,30}"
+                           placeholder="security"/>
+                </label>
+                <label>
+                    <span><code>message_thread_id</code> в sendMessage</span>
+                    <input type="text" name="threadId" required maxlength="64" pattern="[a-zA-Z0-9_-]{1,64}"
+                           placeholder="9001"/>
+                </label>
+                <div class="icon-picker-block">
+                    <span class="icon-picker-label">Иконка вкладки</span>
+                    <input type="hidden" name="icon" id="selected-icon" th:value="${iconOptions[0]}" required/>
+                    <div class="icon-picker-preview" id="icon-preview" th:text="${iconOptions[0]}">📦</div>
+                    <div class="icon-picker-grid" role="listbox" aria-label="Выбор иконки">
+                        <button type="button" class="icon-picker-item"
+                                th:each="ico : ${iconOptions}"
+                                th:attr="data-icon=${ico}, aria-label=${ico}"
+                                th:text="${ico}">🔒</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Создать категорию</button>
+            </form>
+        </section>
 
-    <section class="info-block auth-card" th:if="${!customCategories.isEmpty()}">
-        <h2 class="block-title">Пользовательские категории</h2>
-        <table class="category-table">
-            <thead>
-            <tr>
-                <th>Вкладка</th>
-                <th>Код</th>
-                <th>message_thread_id</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="c : ${customCategories}">
-                <td th:text="${c.displayName()}">icon name</td>
-                <td><code th:text="${c.code()}">code</code></td>
-                <td><code th:text="${c.threadId()}">thread</code></td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
+        <section class="info-block auth-card">
+            <h2 class="block-title">Пользовательские категории</h2>
+            <p class="hint" th:if="${customCategories.isEmpty()}">Пока нет своих категорий — создайте первую слева.</p>
+            <div class="category-list" th:if="${!customCategories.isEmpty()}">
+                <article class="category-row" th:each="c : ${customCategories}">
+                    <div class="category-row-main">
+                        <span class="category-row-icon" th:text="${c.icon()}">📦</span>
+                        <div>
+                            <h3 th:text="${c.label()}">Name</h3>
+                            <p class="category-row-meta">
+                                код <code th:text="${c.code()}">code</code>
+                                · thread <code th:text="${c.threadId()}">id</code>
+                            </p>
+                        </div>
+                    </div>
+                    <form th:action="@{/auth/admin/categories/delete}" method="post" class="inline-form"
+                          onsubmit="return confirm('Удалить категорию «' + this.dataset.label + '»? Отчёты в базе останутся с прежним кодом.');"
+                          th:attr="data-label=${c.label()}">
+                        <input type="hidden" name="id" th:value="${c.id()}"/>
+                        <button type="submit" class="btn-danger btn-sm">Удалить</button>
+                    </form>
+                </article>
+            </div>
+
+            <h3 class="block-title subtle-title">Встроенные (только просмотр)</h3>
+            <ul class="builtin-category-list">
+                <li th:each="b : ${builtInCategories}" th:text="${b.displayName()}">cat</li>
+            </ul>
+        </section>
+    </div>
 </main>
+<script>
+(function () {
+    const hidden = document.getElementById('selected-icon');
+    const preview = document.getElementById('icon-preview');
+    const items = document.querySelectorAll('.icon-picker-item');
+    if (!hidden || !preview || !items.length) return;
+
+    function select(icon, btn) {
+        hidden.value = icon;
+        preview.textContent = icon;
+        items.forEach(function (el) { el.classList.remove('selected'); });
+        if (btn) btn.classList.add('selected');
+    }
+
+    items.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            select(btn.getAttribute('data-icon'), btn);
+        });
+    });
+    select(hidden.value, items[0]);
+})();
+</script>
 </body>
 </html>

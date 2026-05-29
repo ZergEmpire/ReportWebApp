@@ -6,45 +6,58 @@
     <title>Авторизация — Report Web App</title>
     <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
 </head>
-<body>
-<header class="header">
+<body class="auth-screen">
+<header class="header header-compact">
     <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
 </header>
-<main class="container auth-page">
-    <article class="report-hero">
-        <h1><span class="hero-icon">🔐</span> Доступ к Report Web App</h1>
-        <p class="hero-meta">Для просмотра отчётов нужен ключ доступа или учётная запись администратора.</p>
+
+<main class="auth-screen-main">
+    <article class="auth-hero">
+        <p class="auth-eyebrow">Защищённый доступ</p>
+        <h1>Добро пожаловать</h1>
+        <p class="auth-lead">Просмотр отчётов автотестов и уведомлений. Войдите по ключу или как администратор.</p>
     </article>
 
-    <DIV class="flash" th:if="${message != null}" th:classappend="${messageType}">
+    <DIV class="flash auth-flash" th:if="${message != null}" th:classappend="${messageType}">
         <span th:text="${message}">msg</span>
     </DIV>
 
-    <section class="info-block auth-card">
-        <h2 class="block-title">Вход по ключу доступа</h2>
-        <form th:action="@{/auth/access}" method="post" class="auth-form">
-            <label class="auth-label" for="accessKey">Ключ</label>
-            <input id="accessKey" name="accessKey" class="auth-input" type="password" required="required"
-                   autocomplete="one-time-code" placeholder="Вставьте выданный ключ"/>
-            <button class="btn-primary" type="submit">Войти</button>
-        </form>
-        <p class="hint">
-            Если у вас нет ключа, обратитесь к администратору:
-            <a th:href="'mailto:' + ${adminContactEmail}" th:text="${adminContactEmail}">s.kavalerov@rt-solar.ru</a>.
-        </p>
-    </section>
+    <div class="auth-cards">
+        <section class="auth-panel">
+            <div class="auth-panel-icon">🔑</div>
+            <h2>Вход по ключу</h2>
+            <p class="auth-panel-desc">Для просмотра Dashboard и отчётов</p>
+            <form th:action="@{/auth/access}" method="post" class="auth-form">
+                <label class="auth-label" for="accessKey">Ключ доступа</label>
+                <input id="accessKey" name="accessKey" class="auth-input" type="password" required="required"
+                       autocomplete="one-time-code" placeholder="Вставьте выданный ключ"/>
+                <button class="btn-primary btn-block" type="submit">Войти</button>
+            </form>
+            <p class="auth-panel-footer">
+                Нет ключа? Напишите администратору:
+                <a th:href="'mailto:' + ${adminContactEmail}" th:text="${adminContactEmail}">email</a>
+            </p>
+        </section>
 
-    <section class="info-block auth-card" id="admin">
-        <h2 class="block-title">Вход администратора</h2>
-        <form th:action="@{/auth/admin}" method="post" class="auth-form">
-            <label class="auth-label" for="username">Логин</label>
-            <input id="username" name="username" class="auth-input" type="text" required="required" autocomplete="username"/>
-            <label class="auth-label" for="password">Пароль</label>
-            <input id="password" name="password" class="auth-input" type="password" required="required"
-                   autocomplete="current-password"/>
-            <button class="btn-primary" type="submit">Войти как администратор</button>
-        </form>
-    </section>
+        <section class="auth-panel auth-panel-accent" id="admin">
+            <div class="auth-panel-icon">🛡️</div>
+            <h2>Администратор</h2>
+            <p class="auth-panel-desc">Ключ доступа, категории, настройки</p>
+            <form th:action="@{/auth/admin}" method="post" class="auth-form">
+                <label class="auth-label" for="username">Логин</label>
+                <input id="username" name="username" class="auth-input" type="text" required="required"
+                       autocomplete="username" placeholder="admin"/>
+                <label class="auth-label" for="password">Пароль</label>
+                <input id="password" name="password" class="auth-input" type="password" required="required"
+                       autocomplete="current-password" placeholder="••••••••"/>
+                <button class="btn-primary btn-block" type="submit">Войти как администратор</button>
+            </form>
+            <ul class="auth-features">
+                <li>Управление категориями и иконками</li>
+                <li>Генерация ключей для команды</li>
+            </ul>
+        </section>
+    </div>
 </main>
 </body>
 </html>

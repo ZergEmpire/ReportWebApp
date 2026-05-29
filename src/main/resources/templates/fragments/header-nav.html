@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="header-nav" th:fragment="main(active)">
+    <a th:href="@{/}" th:classappend="${active == 'dashboard'} ? 'active'">Dashboard</a>
+    <a th:href="@{/backup}" th:classappend="${active == 'backup'} ? 'active'">Архив истории</a>
+
+    <span th:if="${isAdminSession}" class="nav-admin-group">
+        <span class="nav-admin-label">Администрирование</span>
+        <a th:href="@{/auth/admin/key}" th:classappend="${active == 'admin-key'} ? 'active'">Ключ доступа</a>
+        <a th:href="@{/auth/admin/categories}" th:classappend="${active == 'admin-categories'} ? 'active'">Категории</a>
+    </span>
+
+    <a th:if="${!isAdminSession}" th:href="@{/auth/login#admin}" class="nav-admin-entry">Вход администратора</a>
+
+    <form th:action="@{/auth/logout}" method="post" class="inline-form">
+        <button type="submit" class="btn-action">Выйти</button>
+    </form>
+</nav>
+</body>
+</html>

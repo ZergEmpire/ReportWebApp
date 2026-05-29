@@ -15,6 +15,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,5 +74,16 @@ class CategoryServiceTest {
         assertThatThrownBy(() -> service.createCustom("api", "9999", "Dup", "🧪"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("встроенной");
+    }
+
+    @Test
+    void deleteCustom_removesEntity() {
+        ReportCategoryEntity entity = new ReportCategoryEntity();
+        entity.setId(5L);
+        when(repository.findById(5L)).thenReturn(java.util.Optional.of(entity));
+
+        service.deleteCustom(5L);
+
+        verify(repository).delete(entity);
     }
 }

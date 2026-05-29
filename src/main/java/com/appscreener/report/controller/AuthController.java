@@ -1,8 +1,12 @@
 package com.appscreener.report.controller;
 
 import com.appscreener.report.model.CategoryIcons;
+import com.appscreener.report.model.CategoryInfo;
+import com.appscreener.report.model.ReportCategory;
 import com.appscreener.report.service.AccessControlService;
 import com.appscreener.report.service.CategoryService;
+
+import java.util.Arrays;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -51,7 +55,9 @@ public class AuthController {
             HttpSession session,
             RedirectAttributes flash) {
         if (accessControlService.authenticateAdmin(username, password, session)) {
-            return "redirect:/auth/admin/key";
+            flash.addFlashAttribute("message", "Вы вошли как администратор");
+            flash.addFlashAttribute("messageType", "ok");
+            return "redirect:/auth/admin/categories";
         }
         flash.addFlashAttribute("message", "Неверный логин или пароль администратора");
         flash.addFlashAttribute("messageType", "error");
@@ -84,8 +90,12 @@ public class AuthController {
         if (!accessControlService.isAdminSession(session)) {
             return "redirect:/auth/login";
         }
-        model.addAttribute("customCategories", categoryService.customCategories());
+        model.addAttribute("customCategories", categoryService.customCategoriesForAdmin());
         model.addAttribute("iconOptions", CategoryIcons.PICKER_OPTIONS);
+        model.addAttribute("builtInCategories", Arrays.stream(ReportCategory.values())
+                .filter(c -> c != ReportCategory.ALL && c != ReportCategory.DEBUG)
+                .map(CategoryInfo::fromEnum)
+                .toList());
         return "auth-admin-categories";
     }
 
@@ -105,6 +115,25 @@ public class AuthController {
             flash.addFlashAttribute("message",
                     "Категория создана: " + created.displayName()
                             + " — в автотестах укажите message_thread_id=" + created.threadId());
+            flash.addFlashAttribute("messageType", "ok");
+        } catch (IllegalArgumentException ex) {
+            flash.addFlashAttribute("message", ex.getMessage());
+            flash.addFlashAttribute("messageType", "error");
+        }
+        return "redirect:/auth/admin/categories";
+    }
+
+    @PostMapping("/auth/admin/categories/delete")
+    public String deleteCategory(
+            HttpSession session,
+            @RequestParam("id") long id,
+            RedirectAttributes flash) {
+        if (!accessControlService.isAdminSession(session)) {
+            return "redirect:/auth/login";
+        }
+        try {
+            categoryService.deleteCustom(id);
+            flash.addFlashAttribute("message", "Категория удалена");
             flash.addFlashAttribute("messageType", "ok");
         } catch (IllegalArgumentException ex) {
             flash.addFlashAttribute("message", ex.getMessage());

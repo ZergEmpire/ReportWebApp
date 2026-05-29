@@ -3,6 +3,7 @@ package com.appscreener.report.service;
 import com.appscreener.report.entity.ReportCategoryEntity;
 import com.appscreener.report.model.CategoryIcons;
 import com.appscreener.report.model.CategoryInfo;
+import com.appscreener.report.model.CustomCategoryView;
 import com.appscreener.report.model.ReportCategory;
 import com.appscreener.report.repository.ReportCategoryRepository;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,20 @@ public class CategoryService {
         return repository.findAllByOrderBySortOrderAscLabelAsc().stream()
                 .map(this::toInfo)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CustomCategoryView> customCategoriesForAdmin() {
+        return repository.findAllByOrderBySortOrderAscLabelAsc().stream()
+                .map(this::toAdminView)
+                .toList();
+    }
+
+    @Transactional
+    public void deleteCustom(long id) {
+        ReportCategoryEntity entity = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Категория не найдена"));
+        repository.delete(entity);
     }
 
     @Transactional(readOnly = true)
@@ -143,6 +158,11 @@ public class CategoryService {
 
     private CategoryInfo toInfo(ReportCategoryEntity entity) {
         return new CategoryInfo(entity.getThreadId(), entity.getCode(),
+                entity.getLabel(), entity.getIcon());
+    }
+
+    private CustomCategoryView toAdminView(ReportCategoryEntity entity) {
+        return new CustomCategoryView(entity.getId(), entity.getThreadId(), entity.getCode(),
                 entity.getLabel(), entity.getIcon());
     }
 }
