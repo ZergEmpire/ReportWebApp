@@ -3,6 +3,8 @@ package com.appscreener.report.service;
 import com.appscreener.report.config.AuthProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -11,6 +13,8 @@ import java.util.Objects;
 
 @Service
 public class AccessControlService {
+
+    private static final Logger log = LoggerFactory.getLogger(AccessControlService.class);
 
     public static final String SESSION_AUTHENTICATED = "auth.authenticated";
     public static final String SESSION_IS_ADMIN = "auth.isAdmin";
@@ -28,17 +32,18 @@ public class AccessControlService {
 
     @PostConstruct
     public void initialize() {
+        if (!authProperties.isEnabled()) {
+            log.warn("report.auth.enabled=false — UI всё равно защищён; уберите REPORT_AUTH_ENABLED=false на стенде");
+        }
         rotateAccessKey();
+        log.info("Авторизация UI включена (ключ доступа + вход администратора)");
     }
 
     public boolean isAuthEnabled() {
-        return authProperties.isEnabled();
+        return true;
     }
 
     public boolean authenticateByAccessKey(String key, HttpSession session) {
-        if (!isAuthEnabled()) {
-            return false;
-        }
         String normalized = key != null ? key.trim() : "";
         if (normalized.isEmpty()) {
             return false;
@@ -54,9 +59,6 @@ public class AccessControlService {
     }
 
     public boolean authenticateAdmin(String username, String password, HttpSession session) {
-        if (!isAuthEnabled()) {
-            return false;
-        }
         boolean ok = Objects.equals(authProperties.getAdminUsername(), username)
                 && Objects.equals(authProperties.getAdminPassword(), password);
         if (!ok) {
@@ -69,9 +71,6 @@ public class AccessControlService {
     }
 
     public boolean isAuthorizedSession(HttpSession session) {
-        if (!isAuthEnabled()) {
-            return false;
-        }
         if (session == null) {
             return false;
         }

@@ -527,11 +527,11 @@ curl -F "file=@history-20260521-120000.json.gz" "http://localhost:8080/api/backu
 
 | Переменная | Назначение |
 |------------|------------|
-| `REPORT_AUTH_ENABLED` | Должно быть **`true`** (в `docker-compose.yml` уже так) |
 | `REPORT_AUTH_ADMIN_USERNAME` | Логин админа |
 | `REPORT_AUTH_ADMIN_PASSWORD` | Пароль админа (**обязательно** смените на стенде) |
 
-Не ставьте `REPORT_AUTH_ENABLED=false` — UI станет недоступен (режим «закрыто»).
+Переменная **`REPORT_AUTH_ENABLED` больше не используется** — авторизация UI всегда включена в коде.  
+Если на стенде осталось `REPORT_AUTH_ENABLED=false` от старых настроек, **удалите её** из панели Timeweb (иначе в старых сборках UI открывался без входа).
 
 ## Типичные проблемы
 

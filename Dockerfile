@@ -19,4 +19,6 @@ USER appuser
 
 EXPOSE 8080
 
+ENV SPRING_PROFILES_ACTIVE=docker
+
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

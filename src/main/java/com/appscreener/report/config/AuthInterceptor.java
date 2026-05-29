@@ -19,9 +19,6 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (!accessControlService.isAuthEnabled()) {
-            return true;
-        }
         HttpSession session = request.getSession(false);
         if (accessControlService.isAuthorizedSession(session)) {
             return true;
