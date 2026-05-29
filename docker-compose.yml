@@ -5,8 +5,8 @@
 services:
   report-web-app:
     build: .
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       REPORT_SEED_DEMO: "${REPORT_SEED_DEMO:-false}"

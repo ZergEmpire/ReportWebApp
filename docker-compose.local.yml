@@ -2,6 +2,8 @@
 services:
   report-web-app:
     image: report-web-app:local
+    ports:
+      - "8080:8080"
     volumes:
       - report-data:/app/data
       - report-backups:/app/backups
