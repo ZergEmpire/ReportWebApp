@@ -504,7 +504,14 @@ java -jar target/report-web-app-1.0-SNAPSHOT.jar
 
 ## Архив истории (Backup)
 
-Снимок `history-*.json.gz` в `./backups`. UI: http://localhost:8080/backup
+Снимок `history-*.json.gz` в `./backups`. UI: http://localhost:8080/backup  
+Архив включает:
+
+- прогоны (`test_runs`);
+- сообщения прогонов (`report_messages`);
+- пользовательские категории (`report_categories`).
+
+При восстановлении архива пользовательские категории также восстанавливаются.
 
 ```bash
 curl -F "file=@history-20260521-120000.json.gz" "http://localhost:8080/api/backup/upload?restore=true"
@@ -529,9 +536,12 @@ curl -F "file=@history-20260521-120000.json.gz" "http://localhost:8080/api/backu
 |------------|------------|
 | `REPORT_AUTH_ADMIN_USERNAME` | Логин админа |
 | `REPORT_AUTH_ADMIN_PASSWORD` | Пароль админа (**обязательно** смените на стенде) |
+| `REPORT_AUTH_INITIAL_ACCESS_KEY` | Стартовый ключ доступа при развёртке (по умолчанию `report-web-app-access-key`) |
 
 Переменная **`REPORT_AUTH_ENABLED` больше не используется** — авторизация UI всегда включена в коде.  
 Если на стенде осталось `REPORT_AUTH_ENABLED=false` от старых настроек, **удалите её** из панели Timeweb (иначе в старых сборках UI открывался без входа).
+
+Стартовый ключ читается из `REPORT_AUTH_INITIAL_ACCESS_KEY` на каждом запуске, поэтому после деплоя можно использовать один и тот же установочный ключ в документации и CI.
 
 ## Типичные проблемы
 
@@ -548,7 +558,6 @@ curl -F "file=@history-20260521-120000.json.gz" "http://localhost:8080/api/backu
 ## MVP ограничения
 
 - Только текст/Markdown (фото не поддерживаются)
-- Удаление пользовательских категорий из UI пока не реализовано
 - `/sendMessage` без авторизации — ограничьте сеть на production
 
 ## Сборка

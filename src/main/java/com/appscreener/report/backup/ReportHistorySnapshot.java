@@ -7,16 +7,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Компактный снимок истории отчётов (только прогоны и сообщения), формат v1.
+ * Компактный снимок истории отчётов (прогоны, сообщения, пользовательские категории).
  */
 public class ReportHistorySnapshot {
 
-    public static final int FORMAT_VERSION = 1;
+    public static final int FORMAT_VERSION = 2;
+    public static final int MIN_SUPPORTED_FORMAT_VERSION = 1;
 
     private int formatVersion = FORMAT_VERSION;
     private Instant exportedAt;
     private List<RunRecord> runs = new ArrayList<>();
     private List<MessageRecord> messages = new ArrayList<>();
+    private List<CategoryRecord> categories = new ArrayList<>();
 
     public int getFormatVersion() {
         return formatVersion;
@@ -48,6 +50,14 @@ public class ReportHistorySnapshot {
 
     public void setMessages(List<MessageRecord> messages) {
         this.messages = messages;
+    }
+
+    public List<CategoryRecord> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<CategoryRecord> categories) {
+        this.categories = categories;
     }
 
     public static class RunRecord {
@@ -260,6 +270,54 @@ public class ReportHistorySnapshot {
 
         public void setTestItemsJson(String testItemsJson) {
             this.testItemsJson = testItemsJson;
+        }
+    }
+
+    public static class CategoryRecord {
+        private String code;
+        private String threadId;
+        private String label;
+        private String icon;
+        private int sortOrder;
+
+        public String getCode() {
+            return code;
+        }
+
+        public void setCode(String code) {
+            this.code = code;
+        }
+
+        public String getThreadId() {
+            return threadId;
+        }
+
+        public void setThreadId(String threadId) {
+            this.threadId = threadId;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        public String getIcon() {
+            return icon;
+        }
+
+        public void setIcon(String icon) {
+            this.icon = icon;
+        }
+
+        public int getSortOrder() {
+            return sortOrder;
+        }
+
+        public void setSortOrder(int sortOrder) {
+            this.sortOrder = sortOrder;
         }
     }
 }

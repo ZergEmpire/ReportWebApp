@@ -6,8 +6,10 @@ import com.appscreener.report.backup.HistoryArchiveMapper;
 import com.appscreener.report.backup.ReportHistorySnapshot;
 import com.appscreener.report.config.BackupProperties;
 import com.appscreener.report.entity.ReportMessageEntity;
+import com.appscreener.report.entity.ReportCategoryEntity;
 import com.appscreener.report.entity.TestRunEntity;
 import com.appscreener.report.model.BackupInfo;
+import com.appscreener.report.repository.ReportCategoryRepository;
 import com.appscreener.report.repository.ReportMessageRepository;
 import com.appscreener.report.repository.TestRunRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,15 +56,18 @@ public class BackupService {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private final BackupProperties properties;
+    private final ReportCategoryRepository categoryRepository;
     private final TestRunRepository testRunRepository;
     private final ReportMessageRepository messageRepository;
     private final TransactionTemplate transactionTemplate;
 
     public BackupService(BackupProperties properties,
+                         ReportCategoryRepository categoryRepository,
                          TestRunRepository testRunRepository,
                          ReportMessageRepository messageRepository,
                          PlatformTransactionManager transactionManager) {
         this.properties = properties;
+        this.categoryRepository = categoryRepository;
         this.testRunRepository = testRunRepository;
         this.messageRepository = messageRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
@@ -207,6 +212,14 @@ public class BackupService {
     }
 
     private void applySnapshot(ReportHistorySnapshot snapshot) {
+        if (snapshot.getFormatVersion() >= 2) {
+            categoryRepository.deleteAll();
+            categoryRepository.flush();
+            for (ReportHistorySnapshot.CategoryRecord categoryRecord : snapshot.getCategories()) {
+                categoryRepository.save(HistoryArchiveMapper.toCategoryEntity(categoryRecord));
+            }
+        }
+
         messageRepository.deleteAll();
         testRunRepository.deleteAll();
         messageRepository.flush();
@@ -288,6 +301,10 @@ public class BackupService {
         }
         for (ReportMessageEntity message : messages) {
             snapshot.getMessages().add(HistoryArchiveMapper.toMessageRecord(message));
+        }
+        List<ReportCategoryEntity> categories = categoryRepository.findAllByOrderBySortOrderAscLabelAsc();
+        for (ReportCategoryEntity category : categories) {
+            snapshot.getCategories().add(HistoryArchiveMapper.toCategoryRecord(category));
         }
         return snapshot;
     }
@@ -387,11 +404,15 @@ public class BackupService {
         if (snapshot == null) {
             throw new IllegalArgumentException("Пустой архив");
         }
-        if (snapshot.getFormatVersion() != ReportHistorySnapshot.FORMAT_VERSION) {
+        if (snapshot.getFormatVersion() < ReportHistorySnapshot.MIN_SUPPORTED_FORMAT_VERSION
+                || snapshot.getFormatVersion() > ReportHistorySnapshot.FORMAT_VERSION) {
             throw new IllegalStateException("Неподдерживаемая версия архива: " + snapshot.getFormatVersion());
         }
         if (snapshot.getRuns() == null || snapshot.getMessages() == null) {
             throw new IllegalArgumentException("Некорректная структура архива");
+        }
+        if (snapshot.getCategories() == null) {
+            snapshot.setCategories(List.of());
         }
     }
 

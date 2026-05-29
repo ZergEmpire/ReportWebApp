@@ -1,6 +1,7 @@
 package com.appscreener.report.backup;
 
 import com.appscreener.report.entity.ReportMessageEntity;
+import com.appscreener.report.entity.ReportCategoryEntity;
 import com.appscreener.report.entity.TestRunEntity;
 
 public final class HistoryArchiveMapper {
@@ -71,6 +72,26 @@ public final class HistoryArchiveMapper {
         entity.setReportType(m.getReportType());
         entity.setRawText(m.getRawText());
         entity.setTestItemsJson(m.getTestItemsJson());
+        return entity;
+    }
+
+    public static ReportHistorySnapshot.CategoryRecord toCategoryRecord(ReportCategoryEntity entity) {
+        ReportHistorySnapshot.CategoryRecord c = new ReportHistorySnapshot.CategoryRecord();
+        c.setCode(entity.getCode());
+        c.setThreadId(entity.getThreadId());
+        c.setLabel(entity.getLabel());
+        c.setIcon(entity.getIcon());
+        c.setSortOrder(entity.getSortOrder());
+        return c;
+    }
+
+    public static ReportCategoryEntity toCategoryEntity(ReportHistorySnapshot.CategoryRecord record) {
+        ReportCategoryEntity entity = new ReportCategoryEntity();
+        entity.setCode(record.getCode());
+        entity.setThreadId(record.getThreadId());
+        entity.setLabel(record.getLabel());
+        entity.setIcon(record.getIcon());
+        entity.setSortOrder(record.getSortOrder());
         return entity;
     }
 }

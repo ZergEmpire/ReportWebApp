@@ -35,7 +35,14 @@ public class AccessControlService {
         if (!authProperties.isEnabled()) {
             log.warn("report.auth.enabled=false — UI всё равно защищён; уберите REPORT_AUTH_ENABLED=false на стенде");
         }
-        rotateAccessKey();
+        String bootKey = normalize(authProperties.getInitialAccessKey());
+        if (bootKey != null) {
+            setAccessKey(bootKey);
+            log.info("Установлен стартовый ключ доступа из настроек");
+        } else {
+            rotateAccessKey();
+            log.warn("Стартовый ключ не задан, сгенерирован случайный");
+        }
         log.info("Авторизация UI включена (ключ доступа + вход администратора)");
     }
 
@@ -105,9 +112,21 @@ public class AccessControlService {
     public synchronized String rotateAccessKey() {
         byte[] bytes = new byte[24];
         random.nextBytes(bytes);
-        activeAccessKey = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        return setAccessKey(Base64.getUrlEncoder().withoutPadding().encodeToString(bytes));
+    }
+
+    private synchronized String setAccessKey(String key) {
+        activeAccessKey = key;
         activeKeyVersion++;
         return activeAccessKey;
+    }
+
+    private static String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     public String getActiveAccessKey() {

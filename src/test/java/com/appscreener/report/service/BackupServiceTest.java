@@ -2,9 +2,11 @@ package com.appscreener.report.service;
 
 import com.appscreener.report.backup.ReportHistorySnapshot;
 import com.appscreener.report.config.BackupProperties;
+import com.appscreener.report.entity.ReportCategoryEntity;
 import com.appscreener.report.entity.ReportMessageEntity;
 import com.appscreener.report.entity.TestRunEntity;
 import com.appscreener.report.model.ReportType;
+import com.appscreener.report.repository.ReportCategoryRepository;
 import com.appscreener.report.repository.ReportMessageRepository;
 import com.appscreener.report.repository.TestRunRepository;
 import org.junit.jupiter.api.Test;
@@ -48,8 +50,19 @@ class BackupServiceTest {
     @Autowired
     private ReportMessageRepository messageRepository;
 
+    @Autowired
+    private ReportCategoryRepository categoryRepository;
+
     @Test
     void archiveRoundTrip() throws Exception {
+        ReportCategoryEntity category = new ReportCategoryEntity();
+        category.setCode("security");
+        category.setThreadId("9001");
+        category.setLabel("Security");
+        category.setIcon("🔒");
+        category.setSortOrder(101);
+        categoryRepository.save(category);
+
         TestRunEntity run = new TestRunEntity();
         run.setId("run1");
         run.setCategoryCode("api");
@@ -77,12 +90,15 @@ class BackupServiceTest {
 
         messageRepository.deleteAll();
         testRunRepository.deleteAll();
+        categoryRepository.deleteAll();
         assertEquals(0, testRunRepository.count());
 
         backupService.restoreBackup(created.getBackup().getFileName());
 
         assertEquals(1, testRunRepository.count());
         assertEquals(1, messageRepository.count());
+        assertEquals(1, categoryRepository.count());
+        assertEquals("Security", categoryRepository.findByCodeIgnoreCase("security").orElseThrow().getLabel());
         assertEquals("API run", testRunRepository.findById("run1").orElseThrow().getTitle());
     }
 

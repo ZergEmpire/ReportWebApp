@@ -9,6 +9,7 @@ public class AuthProperties {
     private String adminUsername = "admin";
     private String adminPassword = "1337ZergEmpire!";
     private String adminContactEmail = "s.kavalerov@rt-solar.ru";
+    private String initialAccessKey = "report-web-app-access-key";
 
     public boolean isEnabled() {
         return enabled;
@@ -40,5 +41,13 @@ public class AuthProperties {
 
     public void setAdminContactEmail(String adminContactEmail) {
         this.adminContactEmail = adminContactEmail;
+    }
+
+    public String getInitialAccessKey() {
+        return initialAccessKey;
+    }
+
+    public void setInitialAccessKey(String initialAccessKey) {
+        this.initialAccessKey = initialAccessKey;
     }
 }
