@@ -35,7 +35,7 @@ class CategoryServiceTest {
     void resolveByThreadId_builtinApi() {
         Optional<CategoryInfo> cat = service.resolveByThreadId("2");
         assertThat(cat).isPresent();
-        assertThat(cat.get().getCode()).isEqualTo("api");
+        assertThat(cat.get().code()).isEqualTo("api");
     }
 
     @Test
@@ -50,8 +50,8 @@ class CategoryServiceTest {
 
         Optional<CategoryInfo> cat = service.resolveByThreadId("9001");
         assertThat(cat).isPresent();
-        assertThat(cat.get().getCode()).isEqualTo("security");
-        assertThat(cat.get().getLabel()).isEqualTo("Security");
+        assertThat(cat.get().code()).isEqualTo("security");
+        assertThat(cat.get().label()).isEqualTo("Security");
     }
 
     @Test
@@ -65,7 +65,7 @@ class CategoryServiceTest {
         when(repository.findAllByOrderBySortOrderAscLabelAsc()).thenReturn(List.of(entity));
 
         List<CategoryInfo> nav = service.navigable();
-        assertThat(nav).extracting(CategoryInfo::getCode)
+        assertThat(nav).extracting(CategoryInfo::code)
                 .contains("all", "api", "perf", "local");
     }
 
