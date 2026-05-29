@@ -9,5 +9,6 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      REPORT_AUTH_ENABLED: "true"
       REPORT_SEED_DEMO: "${REPORT_SEED_DEMO:-false}"
       ALLURE_TESTOPS_TOKEN: "${ALLURE_TESTOPS_TOKEN:-}"

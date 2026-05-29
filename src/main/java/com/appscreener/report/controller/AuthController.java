@@ -61,7 +61,7 @@ public class AuthController {
     @GetMapping("/auth/admin/key")
     public String adminKeyPage(HttpSession session, Model model) {
         if (!accessControlService.isAdminSession(session)) {
-            return "redirect:/";
+            return "redirect:/auth/login";
         }
         model.addAttribute("activeKey", accessControlService.getActiveAccessKey());
         model.addAttribute("keyVersion", accessControlService.getActiveKeyVersion());
@@ -71,7 +71,7 @@ public class AuthController {
     @PostMapping("/auth/admin/key/rotate")
     public String rotateKey(HttpSession session, RedirectAttributes flash) {
         if (!accessControlService.isAdminSession(session)) {
-            return "redirect:/";
+            return "redirect:/auth/login";
         }
         String newKey = accessControlService.rotateAccessKey();
         flash.addFlashAttribute("message", "Новый ключ сгенерирован: " + newKey);
@@ -82,7 +82,7 @@ public class AuthController {
     @GetMapping("/auth/admin/categories")
     public String adminCategoriesPage(HttpSession session, Model model) {
         if (!accessControlService.isAdminSession(session)) {
-            return "redirect:/";
+            return "redirect:/auth/login";
         }
         model.addAttribute("customCategories", categoryService.customCategories());
         model.addAttribute("iconOptions", CategoryIcons.PICKER_OPTIONS);
@@ -98,7 +98,7 @@ public class AuthController {
             @RequestParam("icon") String icon,
             RedirectAttributes flash) {
         if (!accessControlService.isAdminSession(session)) {
-            return "redirect:/";
+            return "redirect:/auth/login";
         }
         try {
             var created = categoryService.createCustom(code, threadId, label, icon);

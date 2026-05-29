@@ -37,7 +37,7 @@ public class AccessControlService {
 
     public boolean authenticateByAccessKey(String key, HttpSession session) {
         if (!isAuthEnabled()) {
-            return true;
+            return false;
         }
         String normalized = key != null ? key.trim() : "";
         if (normalized.isEmpty()) {
@@ -55,7 +55,7 @@ public class AccessControlService {
 
     public boolean authenticateAdmin(String username, String password, HttpSession session) {
         if (!isAuthEnabled()) {
-            return true;
+            return false;
         }
         boolean ok = Objects.equals(authProperties.getAdminUsername(), username)
                 && Objects.equals(authProperties.getAdminPassword(), password);
@@ -70,7 +70,7 @@ public class AccessControlService {
 
     public boolean isAuthorizedSession(HttpSession session) {
         if (!isAuthEnabled()) {
-            return true;
+            return false;
         }
         if (session == null) {
             return false;

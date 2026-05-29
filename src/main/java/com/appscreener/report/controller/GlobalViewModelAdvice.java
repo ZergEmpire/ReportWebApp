@@ -23,4 +23,5 @@ public class GlobalViewModelAdvice {
     public boolean isAdminSession(HttpSession session) {
         return accessControlService.isAdminSession(session);
     }
+
 }
