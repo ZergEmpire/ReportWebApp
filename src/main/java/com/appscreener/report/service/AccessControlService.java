@@ -140,4 +140,13 @@ public class AccessControlService {
     public String getAdminContactEmail() {
         return authProperties.getAdminContactEmail();
     }
+
+    public String getInitialAccessKey() {
+        return normalize(authProperties.getInitialAccessKey());
+    }
+
+    public boolean isInitialAccessKeyActive() {
+        String initial = normalize(authProperties.getInitialAccessKey());
+        return initial != null && initial.equals(activeAccessKey);
+    }
 }

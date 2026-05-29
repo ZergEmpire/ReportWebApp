@@ -29,6 +29,13 @@
         <p class="hint">Версия ключа: <strong th:text="${keyVersion}">1</strong></p>
     </section>
 
+    <section class="info-block auth-card" th:if="${initialAccessKey != null}">
+        <h2 class="block-title">Установочный ключ (из env)</h2>
+        <code class="info-code" th:text="${initialAccessKey}">install-key</code>
+        <p class="hint" th:if="${initialAccessKeyActive}">Сейчас это активный ключ доступа (после деплоя).</p>
+        <p class="hint" th:if="${!initialAccessKeyActive}">Сейчас неактивен: администратор уже заменил его через «Сгенерировать новый ключ».</p>
+    </section>
+
     <section class="info-block auth-card">
         <h2 class="block-title">Сгенерировать новый ключ</h2>
         <form th:action="@{/auth/admin/key/rotate}" method="post">

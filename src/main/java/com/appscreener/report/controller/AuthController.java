@@ -71,6 +71,8 @@ public class AuthController {
         }
         model.addAttribute("activeKey", accessControlService.getActiveAccessKey());
         model.addAttribute("keyVersion", accessControlService.getActiveKeyVersion());
+        model.addAttribute("initialAccessKey", accessControlService.getInitialAccessKey());
+        model.addAttribute("initialAccessKeyActive", accessControlService.isInitialAccessKeyActive());
         return "auth-admin";
     }
 
