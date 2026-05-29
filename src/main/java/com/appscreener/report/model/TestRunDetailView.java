@@ -31,12 +31,20 @@ public class TestRunDetailView {
     private List<TestLineItem> suiteResults = new ArrayList<>();
     private List<TestLineItem> successfulSuites = new ArrayList<>();
     private List<TestLineItem> failedSuites = new ArrayList<>();
+    private List<TestLineItem> notificationItems = new ArrayList<>();
 
     public boolean isDailySummary() {
         return reportType == ReportType.DAILY_SUMMARY;
     }
 
+    public boolean isNotification() {
+        return reportType == ReportType.NOTIFICATION;
+    }
+
     public boolean isSuccess() {
+        if (reportType == ReportType.NOTIFICATION) {
+            return failedTests == null || failedTests == 0;
+        }
         return failedTests == null || failedTests == 0;
     }
 
@@ -238,5 +246,13 @@ public class TestRunDetailView {
 
     public void setFailedSuites(List<TestLineItem> failedSuites) {
         this.failedSuites = failedSuites;
+    }
+
+    public List<TestLineItem> getNotificationItems() {
+        return notificationItems;
+    }
+
+    public void setNotificationItems(List<TestLineItem> notificationItems) {
+        this.notificationItems = notificationItems;
     }
 }

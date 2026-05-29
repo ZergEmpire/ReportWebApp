@@ -4,11 +4,14 @@ import com.appscreener.report.entity.TestRunEntity;
 import com.appscreener.report.model.ParsedReport;
 import com.appscreener.report.model.ReportType;
 import com.appscreener.report.parser.MarkdownReportParser;
+import com.appscreener.report.repository.ReportCategoryRepository;
 import com.appscreener.report.repository.ReportMessageRepository;
 import com.appscreener.report.repository.TestRunRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,14 +24,27 @@ import static org.mockito.Mockito.when;
  */
 class ReportStorageServiceSummaryMergeTest {
 
-    private final MarkdownReportParser parser = new MarkdownReportParser();
+    private MarkdownReportParser parser;
+
+    @BeforeEach
+    void setUp() {
+        ReportCategoryRepository categoryRepo = mock(ReportCategoryRepository.class);
+        when(categoryRepo.findAllByOrderBySortOrderAscLabelAsc()).thenReturn(List.of());
+        parser = new MarkdownReportParser(new CategoryService(categoryRepo));
+    }
 
     @Test
     void unknownLinkMessageMustNotClearSummaryFields() throws Exception {
         TestRunRepository runRepo = mock(TestRunRepository.class);
         when(runRepo.save(any(TestRunEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        ReportCategoryRepository categoryRepo = mock(ReportCategoryRepository.class);
+        when(categoryRepo.findAllByOrderBySortOrderAscLabelAsc()).thenReturn(List.of());
         ReportStorageService service = new ReportStorageService(
-                runRepo, mock(ReportMessageRepository.class), parser, mock(AllureTestOpsService.class));
+                runRepo,
+                mock(ReportMessageRepository.class),
+                parser,
+                mock(AllureTestOpsService.class),
+                new CategoryService(categoryRepo));
 
         String summaryText = """
                 ☑️ Результаты тестирования приложения appScreener.

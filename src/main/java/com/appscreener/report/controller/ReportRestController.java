@@ -1,8 +1,10 @@
 package com.appscreener.report.controller;
 
 import com.appscreener.report.entity.ReportMessageEntity;
+import com.appscreener.report.model.CategoryInfo;
 import com.appscreener.report.model.TestRunDetailView;
 import com.appscreener.report.repository.ReportMessageRepository;
+import com.appscreener.report.service.CategoryService;
 import com.appscreener.report.service.ReportStorageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,10 +21,19 @@ public class ReportRestController {
 
     private final ReportStorageService storage;
     private final ReportMessageRepository messageRepository;
+    private final CategoryService categoryService;
 
-    public ReportRestController(ReportStorageService storage, ReportMessageRepository messageRepository) {
+    public ReportRestController(ReportStorageService storage,
+                                ReportMessageRepository messageRepository,
+                                CategoryService categoryService) {
         this.storage = storage;
         this.messageRepository = messageRepository;
+        this.categoryService = categoryService;
+    }
+
+    @GetMapping("/categories")
+    public List<CategoryInfo> categories() {
+        return categoryService.navigable();
     }
 
     @GetMapping("/runs")

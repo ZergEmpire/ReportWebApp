@@ -3,6 +3,7 @@ package com.appscreener.report.service;
 import com.appscreener.report.entity.ReportMessageEntity;
 import com.appscreener.report.entity.TestRunEntity;
 import com.appscreener.report.model.ParsedReport;
+import com.appscreener.report.model.CategoryInfo;
 import com.appscreener.report.model.ReportCategory;
 import com.appscreener.report.model.ReportType;
 import com.appscreener.report.model.TestLineItem;
@@ -30,24 +31,27 @@ public class ReportStorageService {
     private final ReportMessageRepository messageRepository;
     private final MarkdownReportParser parser;
     private final AllureTestOpsService allureTestOpsService;
+    private final CategoryService categoryService;
 
     public ReportStorageService(TestRunRepository testRunRepository,
                                 ReportMessageRepository messageRepository,
                                 MarkdownReportParser parser,
-                                AllureTestOpsService allureTestOpsService) {
+                                AllureTestOpsService allureTestOpsService,
+                                CategoryService categoryService) {
         this.testRunRepository = testRunRepository;
         this.messageRepository = messageRepository;
         this.parser = parser;
         this.allureTestOpsService = allureTestOpsService;
+        this.categoryService = categoryService;
     }
 
     @Transactional
     public String save(String text, String parseMode, String messageThreadId, String runId) {
-        ReportCategory category = ReportCategory.fromThreadId(messageThreadId)
-                .filter(c -> c != ReportCategory.ALL)
-                .orElse(ReportCategory.GENERAL);
+        CategoryInfo category = categoryService.resolveByThreadId(messageThreadId)
+                .filter(c -> !c.isAll())
+                .orElse(CategoryInfo.fromEnum(ReportCategory.GENERAL));
 
-        ParsedReport parsed = parser.parse(text, category.getCode());
+        ParsedReport parsed = parser.parse(text, category.code());
         String messageId = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         Instant now = Instant.now();
 
@@ -65,7 +69,7 @@ public class ReportStorageService {
         }
         messageRepository.save(message);
 
-        if (isSummaryType(parsed.getReportType())) {
+        if (returnsRunId(parsed.getReportType())) {
             return run.getId();
         }
         return messageId;
@@ -130,7 +134,7 @@ public class ReportStorageService {
         return testRunRepository.deleteOlderThan(cutoff);
     }
 
-    private TestRunEntity resolveTestRun(ParsedReport parsed, ReportCategory category,
+    private TestRunEntity resolveTestRun(ParsedReport parsed, CategoryInfo category,
                                          String runId, String messageId, Instant now) {
         if (runId != null && !runId.isBlank()) {
             Optional<TestRunEntity> existing = testRunRepository.findById(runId);
@@ -139,10 +143,10 @@ public class ReportStorageService {
             }
         }
 
-        if (isSummaryType(parsed.getReportType())) {
+        if (returnsRunId(parsed.getReportType())) {
             TestRunEntity run = new TestRunEntity();
             run.setId(messageId);
-            run.setCategoryCode(category.getCode());
+            run.setCategoryCode(category.code());
             run.setReceivedAt(now);
             run.setReportType(parsed.getReportType());
             run.setTitle(parsed.getTitle());
@@ -151,11 +155,11 @@ public class ReportStorageService {
 
         Instant windowStart = now.minus(RUN_LINK_MINUTES, ChronoUnit.MINUTES);
         return testRunRepository
-                .findFirstByCategoryCodeAndReceivedAtAfterOrderByReceivedAtDesc(category.getCode(), windowStart)
+                .findFirstByCategoryCodeAndReceivedAtAfterOrderByReceivedAtDesc(category.code(), windowStart)
                 .orElseGet(() -> {
                     TestRunEntity orphan = new TestRunEntity();
                     orphan.setId(messageId);
-                    orphan.setCategoryCode(category.getCode());
+                    orphan.setCategoryCode(category.code());
                     orphan.setReceivedAt(now);
                     orphan.setReportType(ReportType.UNKNOWN);
                     orphan.setTitle("Прогон (без сводки)");
@@ -164,7 +168,7 @@ public class ReportStorageService {
     }
 
     private void applySummaryFields(TestRunEntity run, ParsedReport parsed) {
-        if (!isSummaryType(parsed.getReportType()) && parsed.getReportType() != ReportType.UNKNOWN) {
+        if (!returnsRunId(parsed.getReportType()) && parsed.getReportType() != ReportType.UNKNOWN) {
             return;
         }
         // Служебные сообщения (ссылка на Report Web App и т.п.) — UNKNOWN без полей сводки; не затираем run
@@ -254,6 +258,7 @@ public class ReportStorageService {
                     view.getFailedSuites().addAll(items);
                     view.getSuiteResults().addAll(items);
                 }
+                case NOTIFICATION -> view.getNotificationItems().addAll(items);
                 default -> {
                 }
             }
@@ -265,9 +270,11 @@ public class ReportStorageService {
         TestRunDetailView view = new TestRunDetailView();
         view.setId(run.getId());
         view.setCategoryCode(run.getCategoryCode());
-        ReportCategory cat = ReportCategory.fromCode(run.getCategoryCode()).orElse(ReportCategory.GENERAL);
-        view.setCategoryLabel(cat.getLabel());
-        view.setCategoryIcon(cat.getIcon());
+        CategoryInfo cat = categoryService.resolveByCode(run.getCategoryCode())
+                .filter(c -> !c.isAll())
+                .orElse(CategoryInfo.fromEnum(ReportCategory.GENERAL));
+        view.setCategoryLabel(cat.label());
+        view.setCategoryIcon(cat.icon());
         view.setReceivedAt(run.getReceivedAt());
         view.setPinned(run.isPinned());
         view.setReportType(run.getReportType());
@@ -321,8 +328,10 @@ public class ReportStorageService {
         return ReportType.UNKNOWN;
     }
 
-    private boolean isSummaryType(ReportType type) {
-        return type == ReportType.TEST_RUN_SUMMARY || type == ReportType.DAILY_SUMMARY;
+    private boolean returnsRunId(ReportType type) {
+        return type == ReportType.TEST_RUN_SUMMARY
+                || type == ReportType.DAILY_SUMMARY
+                || type == ReportType.NOTIFICATION;
     }
 
     public record DashboardStats(int totalReports, long successfulRuns, long failedRuns,

@@ -21,6 +21,42 @@
 <main class="container report-detail-page">
     <a class="back-link" th:href="@{/(category=${run.categoryCode})}">← Назад к списку</a>
 
+    <!-- Произвольное уведомление (📣, без Allure) -->
+    <th:block th:if="${run.notification}">
+        <article class="report-hero">
+            <h1><span class="hero-icon">📣</span> <span th:text="${run.title}">Уведомление</span></h1>
+            <p class="hero-meta">
+                <span th:text="${run.categoryIcon + ' ' + run.categoryLabel}">cat</span>
+                · <span th:text="${#temporals.format(run.receivedAt, 'dd.MM.yyyy HH:mm')}">time</span>
+            </p>
+        </article>
+
+        <section class="info-block" th:if="${run.standUrl != null}">
+            <h2 class="block-title">Стенд</h2>
+            <a class="info-value link" th:href="${run.standUrl}" th:text="${run.standUrl}" target="_blank">stand</a>
+        </section>
+
+        <section class="info-block" th:if="${!run.notificationItems.isEmpty()}">
+            <h2 class="block-title">Содержание</h2>
+            <ul class="test-items notification-items">
+                <li th:each="t : ${run.notificationItems}"
+                    th:classappend="${t.icon != null} ? 'status-line' : 'field-line'">
+                    <span class="ti-icon" th:if="${t.icon != null}" th:text="${t.icon}">✅</span>
+                    <DIV class="notification-body">
+                        <span class="field-label" th:if="${t.icon == null}" th:text="${t.name + ':'}">label</span>
+                        <a th:if="${t.url != null}" th:href="${t.url}" th:text="${t.icon != null ? t.name : t.meta}" target="_blank" rel="noopener">value</a>
+                        <span th:if="${t.url == null and t.icon != null}" th:text="${t.name}">status</span>
+                        <span th:if="${t.url == null and t.icon == null}" th:text="${t.meta}">value</span>
+                    </DIV>
+                </li>
+            </ul>
+        </section>
+
+        <DIV class="links-row" th:if="${run.pipelineUrl != null}">
+            <a th:href="${run.pipelineUrl}" class="btn-link" target="_blank" rel="noopener">🔗 Ссылка</a>
+        </DIV>
+    </th:block>
+
     <!-- Daily Summary -->
     <th:block th:if="${run.dailySummary}">
         <article class="report-hero">
@@ -76,7 +112,7 @@
     </th:block>
 
     <!-- Test run (API, UI, Express, …) -->
-    <th:block th:unless="${run.dailySummary}">
+    <th:block th:if="${!run.dailySummary and !run.notification}">
         <article class="report-hero">
             <h1><span class="hero-icon">☑️</span> Результаты тестирования приложения appScreener</h1>
             <p class="hero-meta">

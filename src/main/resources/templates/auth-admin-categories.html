@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Категории — Report Web App</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<header class="header">
+    <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
+    <nav class="header-nav">
+        <a th:href="@{/}">Dashboard</a>
+        <a th:href="@{/backup}">Архив истории</a>
+        <a th:href="@{/auth/admin/key}">Ключ доступа</a>
+        <a th:href="@{/auth/admin/categories}" class="active">Категории</a>
+        <form th:action="@{/auth/logout}" method="post" class="inline-form">
+            <button type="submit" class="btn-action">Выйти</button>
+        </form>
+    </nav>
+</header>
+<main class="container auth-page">
+    <a class="back-link" th:href="@{/}">← Назад к Dashboard</a>
+
+    <article class="report-hero">
+        <h1><span class="hero-icon">🏷️</span> Категории отчётов</h1>
+        <p class="hero-meta">
+            Новая категория появляется на Dashboard и принимает отчёты с тем же
+            <code>message_thread_id</code>, что вы укажете ниже. Встроенные категории (API, UI, …) менять нельзя.
+        </p>
+    </article>
+
+    <DIV class="flash" th:if="${message != null}" th:classappend="${messageType}">
+        <span th:text="${message}">msg</span>
+    </DIV>
+
+    <section class="info-block auth-card">
+        <h2 class="block-title">Создать категорию</h2>
+        <form th:action="@{/auth/admin/categories}" method="post" class="category-form">
+            <label>
+                <span>Название (вкладка на Dashboard)</span>
+                <input type="text" name="label" required maxlength="120" placeholder="Например: Security scan"/>
+            </label>
+            <label>
+                <span>Код (латиница, для URL <code>?category=</code>)</span>
+                <input type="text" name="code" required maxlength="32" pattern="[a-z][a-z0-9-]{1,30}"
+                       placeholder="security"/>
+            </label>
+            <label>
+                <span>message_thread_id (в запросах автотестов)</span>
+                <input type="text" name="threadId" required maxlength="64" pattern="[a-zA-Z0-9_-]{1,64}"
+                       placeholder="9001"/>
+            </label>
+            <label>
+                <span>Иконка</span>
+                <select name="icon" required>
+                    <option th:each="ico : ${iconOptions}" th:value="${ico}" th:text="${ico}">🔒</option>
+                </select>
+            </label>
+            <button type="submit" class="btn-action">Создать категорию</button>
+        </form>
+        <p class="hint">
+            После создания в CI передайте в <code>sendMessage</code> параметр
+            <code>message_thread_id</code> с указанным значением — отчёты попадут в новую вкладку.
+        </p>
+    </section>
+
+    <section class="info-block auth-card" th:if="${!customCategories.isEmpty()}">
+        <h2 class="block-title">Пользовательские категории</h2>
+        <table class="category-table">
+            <thead>
+            <tr>
+                <th>Вкладка</th>
+                <th>Код</th>
+                <th>message_thread_id</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${customCategories}">
+                <td th:text="${c.displayName()}">icon name</td>
+                <td><code th:text="${c.code()}">code</code></td>
+                <td><code th:text="${c.threadId()}">thread</code></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

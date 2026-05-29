@@ -2,17 +2,36 @@ package com.appscreener.report.parser;
 
 import com.appscreener.report.model.ParsedReport;
 import com.appscreener.report.model.ReportType;
+import com.appscreener.report.repository.ReportCategoryRepository;
+import com.appscreener.report.service.CategoryService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class MarkdownReportParserTest {
 
-    private final MarkdownReportParser parser = new MarkdownReportParser();
+    @Mock
+    private ReportCategoryRepository categoryRepository;
+
+    private MarkdownReportParser parser;
+
+    @BeforeEach
+    void setUp() {
+        when(categoryRepository.findAllByOrderBySortOrderAscLabelAsc()).thenReturn(List.of());
+        parser = new MarkdownReportParser(new CategoryService(categoryRepository));
+    }
 
     @Test
     void parseExpressSummaryFile() throws Exception {
@@ -75,6 +94,21 @@ class MarkdownReportParserTest {
         assertEquals("https://appscreener-auto-ui01qa.ast.rt-solar.ru", report.getStandUrl());
         assertEquals(10, report.getTotalTests());
         assertEquals(3, report.getFailedTests());
+    }
+
+    @Test
+    void parseStandNotification() throws Exception {
+        String text = java.nio.file.Files.readString(
+                java.nio.file.Path.of("seed-payloads/stand-status-notification.txt"));
+        ParsedReport report = parser.parse(text, "healthy");
+
+        assertEquals(ReportType.NOTIFICATION, report.getReportType());
+        assertEquals("API-стенд: плановая проверка", report.getTitle());
+        assertEquals("https://api-stand.dev.example.com", report.getStandUrl());
+        assertEquals(0, report.getFailedTests());
+        assertEquals(1, report.getPassedTests());
+        assertTrue(report.getTestItems().stream().anyMatch(i -> "Статус".equals(i.getName())));
+        assertNotNull(report.getPipelineUrl());
     }
 
     @Test

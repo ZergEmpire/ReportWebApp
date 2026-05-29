@@ -9,5 +9,7 @@ public enum ReportType {
     SUCCESSFUL_SUITES,
     FAILED_SUITES,
     NO_DATA,
+    /** Произвольное уведомление без Allure (маркер 📣 в тексте). */
+    NOTIFICATION,
     UNKNOWN
 }

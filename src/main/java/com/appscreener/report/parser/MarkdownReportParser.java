@@ -1,8 +1,11 @@
 package com.appscreener.report.parser;
 
+import com.appscreener.report.model.CategoryInfo;
 import com.appscreener.report.model.ParsedReport;
+import com.appscreener.report.model.ReportCategory;
 import com.appscreener.report.model.ReportType;
 import com.appscreener.report.model.TestLineItem;
+import com.appscreener.report.service.CategoryService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -14,9 +17,17 @@ import java.util.regex.Pattern;
 @Component
 public class MarkdownReportParser {
 
+    private final CategoryService categoryService;
+
+    public MarkdownReportParser(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
+
     private static final Pattern LINK_PATTERN = Pattern.compile("\\[([^\\]]+)]\\(([^)]+)\\)");
     private static final Pattern INT_PATTERN = Pattern.compile("(\\d+)");
-    private static final Pattern TEST_LINE_PATTERN = Pattern.compile("^(✅|❌|➡️)\\s+(.+)$");
+    private static final Pattern TEST_LINE_PATTERN = Pattern.compile("^(✅|❌|➡️|⚠️|ℹ️)\\s+(.+)$");
+    private static final Pattern NOTIFICATION_LABEL = Pattern.compile("^\\*([^*]+):\\*\\s*(.*)$");
+    private static final Pattern NOTIFICATION_STATUS_LINE = Pattern.compile("^(✅|❌|⚠️|ℹ️)\\s+(.+)$");
     private static final Pattern ALLURE_TEST_RESULT_ID = Pattern.compile(
             "(?:/launch/\\d+/tree/|/testresult/)(\\d+)", Pattern.CASE_INSENSITIVE);
 
@@ -32,6 +43,7 @@ public class MarkdownReportParser {
             case DAILY_SUMMARY -> parseDailySummary(rawText, report);
             case FAILED_TESTS, PASSED_TESTS, SKIPPED_TESTS -> parseTestList(rawText, report);
             case SUCCESSFUL_SUITES, FAILED_SUITES -> parseSuiteList(rawText, report);
+            case NOTIFICATION -> parseNotification(rawText, report);
             case NO_DATA -> report.setTitle("Нет данных Summary");
             default -> {
             }
@@ -42,6 +54,9 @@ public class MarkdownReportParser {
     }
 
     private ReportType detectType(String text) {
+        if (isNotification(text)) {
+            return ReportType.NOTIFICATION;
+        }
         if (text.contains("🚫 Данные для") && text.contains("Summary")) {
             return ReportType.NO_DATA;
         }
@@ -129,8 +144,148 @@ public class MarkdownReportParser {
             case SUCCESSFUL_SUITES -> "Успешные наборы";
             case FAILED_SUITES -> "Наборы с ошибками";
             case NO_DATA -> "Summary — нет данных";
+            case NOTIFICATION -> "Уведомление";
             default -> "Отчёт";
         };
+    }
+
+    private boolean isNotification(String text) {
+        for (String line : text.split("\n")) {
+            String trimmed = line.trim();
+            if (!trimmed.isEmpty()) {
+                return trimmed.startsWith("📣");
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Формат произвольного уведомления (без Allure):
+     * <pre>
+     * 📣 Заголовок
+     * ========================
+     * *Стенд:*
+     * `https://stand.example.com`
+     * *Статус:*
+     * ✅ Сервис отвечает
+     * </pre>
+     */
+    private void parseNotification(String text, ParsedReport report) {
+        String normalized = text.replace("\r\n", "\n");
+        for (String line : normalized.split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith("📣")) {
+                String title = trimmed.substring("📣".length()).trim();
+                if (!title.isEmpty()) {
+                    report.setTitle(title);
+                }
+                break;
+            }
+        }
+        if (report.getTitle() == null || report.getTitle().isBlank()) {
+            report.setTitle("Уведомление");
+        }
+
+        String[] currentLabel = {null};
+        StringBuilder fieldBody = new StringBuilder();
+
+        for (String line : normalized.split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("📣")
+                    || trimmed.startsWith("====") || trimmed.startsWith("----")) {
+                continue;
+            }
+            Matcher status = NOTIFICATION_STATUS_LINE.matcher(stripMarkdown(trimmed));
+            if (status.matches()) {
+                flushNotificationField(report, currentLabel, fieldBody);
+                TestLineItem item = new TestLineItem();
+                item.setIcon(status.group(1));
+                String rest = status.group(2).trim();
+                Matcher link = LINK_PATTERN.matcher(rest);
+                if (link.find()) {
+                    item.setName(link.group(1));
+                    item.setUrl(link.group(2));
+                } else {
+                    item.setName(rest);
+                }
+                report.getTestItems().add(item);
+                continue;
+            }
+            Matcher label = NOTIFICATION_LABEL.matcher(trimmed);
+            if (label.matches()) {
+                flushNotificationField(report, currentLabel, fieldBody);
+                currentLabel[0] = label.group(1).trim();
+                String inline = label.group(2).trim();
+                if (!inline.isEmpty()) {
+                    fieldBody.append(inline);
+                }
+                continue;
+            }
+            if (currentLabel[0] != null) {
+                if (!fieldBody.isEmpty()) {
+                    fieldBody.append('\n');
+                }
+                fieldBody.append(trimmed);
+            }
+        }
+        flushNotificationField(report, currentLabel, fieldBody);
+
+        int problems = 0;
+        int ok = 0;
+        for (TestLineItem item : report.getTestItems()) {
+            if ("❌".equals(item.getIcon()) || "⚠️".equals(item.getIcon())) {
+                problems++;
+            } else if ("✅".equals(item.getIcon())) {
+                ok++;
+            }
+        }
+        report.setFailedTests(problems);
+        report.setPassedTests(ok);
+    }
+
+    private void flushNotificationField(ParsedReport report, String[] currentLabel, StringBuilder fieldBody) {
+        if (currentLabel[0] == null) {
+            return;
+        }
+        String value = stripMarkdown(fieldBody.toString().trim());
+        if (value.isEmpty()) {
+            currentLabel[0] = null;
+            fieldBody.setLength(0);
+            return;
+        }
+        if (isStandLabel(currentLabel[0])) {
+            String url = firstUrlToken(value);
+            if (url != null) {
+                report.setStandUrl(url);
+            }
+        }
+        TestLineItem field = new TestLineItem();
+        field.setName(currentLabel[0]);
+        field.setMeta(value);
+        Matcher link = LINK_PATTERN.matcher(value);
+        if (link.find()) {
+            field.setUrl(link.group(2));
+            field.setMeta(link.group(1));
+        }
+        report.getTestItems().add(field);
+        currentLabel[0] = null;
+        fieldBody.setLength(0);
+    }
+
+    private static boolean isStandLabel(String label) {
+        return label != null && label.toLowerCase().contains("стенд");
+    }
+
+    private static String firstUrlToken(String value) {
+        Matcher backtick = Pattern.compile("`(https?://[^`]+)`").matcher(value);
+        if (backtick.find()) {
+            return backtick.group(1).trim();
+        }
+        Matcher plain = Pattern.compile("(https?://\\S+)").matcher(value);
+        if (plain.find()) {
+            return plain.group(1).replaceAll("[)\\],.]+$", "");
+        }
+        return value.startsWith("http") ? value.trim() : null;
     }
 
     private void parseTestRunSummary(String text, ParsedReport report) {
@@ -243,6 +398,8 @@ public class MarkdownReportParser {
                 report.setPipelineUrl(url);
             } else if (label.contains("Allure") || url.contains("testops")) {
                 report.setAllureUrl(url);
+            } else if (report.getReportType() == ReportType.NOTIFICATION && report.getPipelineUrl() == null) {
+                report.setPipelineUrl(url);
             }
         }
     }
@@ -322,9 +479,10 @@ public class MarkdownReportParser {
         return Optional.empty();
     }
 
-    public static String resolveTestTypeLabel(String threadId) {
-        return com.appscreener.report.model.ReportCategory.fromThreadId(threadId)
-                .map(com.appscreener.report.model.ReportCategory::getCode)
-                .orElse("general");
+    public String resolveTestTypeLabel(String threadId) {
+        return categoryService.resolveByThreadId(threadId)
+                .filter(c -> !c.isAll())
+                .map(CategoryInfo::code)
+                .orElse(ReportCategory.GENERAL.getCode());
     }
 }

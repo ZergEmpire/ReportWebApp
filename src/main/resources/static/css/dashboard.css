@@ -736,3 +736,79 @@ a:hover {
     outline: 1px solid var(--gold-dim);
     border-color: var(--gold);
 }
+
+.category-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 0.75rem;
+}
+
+.category-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.86rem;
+    color: var(--text-muted);
+}
+
+.category-form input,
+.category-form select {
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #08080a;
+    color: var(--text);
+    padding: 0.55rem 0.65rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+.category-form select {
+    max-width: 8rem;
+    font-size: 1.25rem;
+}
+
+.category-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.category-table th,
+.category-table td {
+    text-align: left;
+    padding: 0.55rem 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.category-table code {
+    font-size: 0.82rem;
+    color: var(--gold-light);
+}
+
+.badge.notification {
+    background: rgba(201, 162, 39, 0.18);
+    border-color: var(--gold-dim);
+    color: var(--gold-light);
+}
+
+.report-card.notification-card {
+    border-left: 3px solid var(--gold-dim);
+}
+
+.notification-items .field-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    align-items: baseline;
+}
+
+.notification-items .field-label {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+.notification-items .status-line .notification-body {
+    flex: 1;
+}

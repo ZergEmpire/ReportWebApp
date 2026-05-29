@@ -1,9 +1,9 @@
 package com.appscreener.report.controller;
 
-import com.appscreener.report.model.ReportCategory;
 import com.appscreener.report.model.ReportType;
 import com.appscreener.report.model.TestRunDetailView;
 import com.appscreener.report.service.AllureTestOpsService;
+import com.appscreener.report.service.CategoryService;
 import com.appscreener.report.service.ReportStorageService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,10 +19,14 @@ public class DashboardController {
 
     private final ReportStorageService storage;
     private final AllureTestOpsService allureTestOpsService;
+    private final CategoryService categoryService;
 
-    public DashboardController(ReportStorageService storage, AllureTestOpsService allureTestOpsService) {
+    public DashboardController(ReportStorageService storage,
+                               AllureTestOpsService allureTestOpsService,
+                               CategoryService categoryService) {
         this.storage = storage;
         this.allureTestOpsService = allureTestOpsService;
+        this.categoryService = categoryService;
     }
 
     @GetMapping("/")
@@ -34,14 +38,15 @@ public class DashboardController {
         List<TestRunDetailView> runs = storage.findRuns(categoryCode);
         List<TestRunDetailView> summaryRuns = runs.stream()
                 .filter(r -> r.getReportType() == ReportType.TEST_RUN_SUMMARY
-                        || r.getReportType() == ReportType.DAILY_SUMMARY)
+                        || r.getReportType() == ReportType.DAILY_SUMMARY
+                        || r.getReportType() == ReportType.NOTIFICATION)
                 .toList();
         ReportStorageService.DashboardStats stats = storage.computeStats(categoryCode);
 
         model.addAttribute("runs", runs);
         model.addAttribute("summaryRuns", summaryRuns);
         model.addAttribute("stats", stats);
-        model.addAttribute("categories", ReportCategory.navigable());
+        model.addAttribute("categories", categoryService.navigable());
         model.addAttribute("selectedCategory", categoryCode);
         return "dashboard";
     }
