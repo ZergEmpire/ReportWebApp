@@ -35,10 +35,10 @@ public class AccessControlService {
         if (!authProperties.isEnabled()) {
             log.warn("report.auth.enabled=false — UI всё равно защищён; уберите REPORT_AUTH_ENABLED=false на стенде");
         }
-        String bootKey = normalize(authProperties.getInitialAccessKey());
+        String bootKey = resolveInitialAccessKey();
         if (bootKey != null) {
             setAccessKey(bootKey);
-            log.info("Установлен стартовый ключ доступа из настроек");
+            log.info("Установлен стартовый ключ доступа (env/properties), len={}", bootKey.length());
         } else {
             rotateAccessKey();
             log.warn("Стартовый ключ не задан, сгенерирован случайный");
@@ -121,6 +121,15 @@ public class AccessControlService {
         return activeAccessKey;
     }
 
+    private String resolveInitialAccessKey() {
+        // Приоритет как у ALLURE_TESTOPS_TOKEN: сначала env, потом properties binding.
+        String fromEnv = normalize(System.getenv("REPORT_AUTH_INITIAL_ACCESS_KEY"));
+        if (fromEnv != null) {
+            return fromEnv;
+        }
+        return normalize(authProperties.getInitialAccessKey());
+    }
+
     private static String normalize(String value) {
         if (value == null) {
             return null;
@@ -142,11 +151,11 @@ public class AccessControlService {
     }
 
     public String getInitialAccessKey() {
-        return normalize(authProperties.getInitialAccessKey());
+        return resolveInitialAccessKey();
     }
 
     public boolean isInitialAccessKeyActive() {
-        String initial = normalize(authProperties.getInitialAccessKey());
+        String initial = resolveInitialAccessKey();
         return initial != null && initial.equals(activeAccessKey);
     }
 }

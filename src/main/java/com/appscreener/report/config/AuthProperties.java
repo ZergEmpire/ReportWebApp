@@ -9,7 +9,7 @@ public class AuthProperties {
     private String adminUsername = "admin";
     private String adminPassword = "1337ZergEmpire!";
     private String adminContactEmail = "s.kavalerov@rt-solar.ru";
-    private String initialAccessKey = "report-web-app-access-key";
+    private String initialAccessKey;
 
     public boolean isEnabled() {
         return enabled;
