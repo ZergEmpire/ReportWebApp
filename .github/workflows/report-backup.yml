@@ -1,9 +1,5 @@
-# Скачивание history-*.json.gz с Report Web App (расписание или вручную).
-#
-# Secrets в Environment «Report web app» (Settings → Environments):
+# Secrets: Settings → Environments → Report web app → Environment secrets
 #   REPORT_WEB_APP_URL, REPORT_ACCESS_KEY
-#
-# Расписание: ежедневно 04:00 UTC. Вручную: Actions → Report backup → Run workflow.
 
 name: Report backup
 
@@ -18,14 +14,25 @@ permissions:
 jobs:
   download:
     runs-on: ubuntu-latest
-    environment: Report web app
+    environment:
+      name: Report web app
+    env:
+      REPORT_WEB_APP_URL: ${{ secrets.REPORT_WEB_APP_URL }}
+      REPORT_ACCESS_KEY: ${{ secrets.REPORT_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check secrets are configured
+        run: |
+          if [ -z "${REPORT_WEB_APP_URL}" ] || [ -z "${REPORT_ACCESS_KEY}" ]; then
+            echo "::error::Secrets пустые. Добавьте REPORT_WEB_APP_URL и REPORT_ACCESS_KEY в"
+            echo "::error::Settings → Environments → Report web app → Environment secrets"
+            echo "::error::Запускайте Run workflow на main (не Re-run старого run без environment в yaml)."
+            exit 1
+          fi
+          echo "Secrets OK (значения в логе скрыты GitHub — это нормально)."
+
       - name: Download report history archive
-        env:
-          REPORT_WEB_APP_URL: ${{ secrets.REPORT_WEB_APP_URL }}
-          REPORT_ACCESS_KEY: ${{ secrets.REPORT_ACCESS_KEY }}
         run: bash scripts/download-report-backup.sh
 
       - uses: actions/upload-artifact@v4

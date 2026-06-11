@@ -1,8 +1,4 @@
-# Восстановление истории на стенде из artifact job Report backup (после передеплоя).
-#
-# Secrets — Environment «Report web app»: REPORT_WEB_APP_URL, REPORT_ACCESS_KEY
-#
-# Actions → Restore report backup → backup_run_id из URL .../actions/runs/12345
+# Secrets: Environment «Report web app» — REPORT_WEB_APP_URL, REPORT_ACCESS_KEY
 
 name: Restore report backup
 
@@ -21,9 +17,20 @@ permissions:
 jobs:
   restore:
     runs-on: ubuntu-latest
-    environment: Report web app
+    environment:
+      name: Report web app
+    env:
+      REPORT_WEB_APP_URL: ${{ secrets.REPORT_WEB_APP_URL }}
+      REPORT_ACCESS_KEY: ${{ secrets.REPORT_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check secrets are configured
+        run: |
+          if [ -z "${REPORT_WEB_APP_URL}" ] || [ -z "${REPORT_ACCESS_KEY}" ]; then
+            echo "::error::Environment secrets не заданы (Report web app)."
+            exit 1
+          fi
 
       - name: Download backup artifact from run
         uses: actions/download-artifact@v4
@@ -33,9 +40,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Restore on server
-        env:
-          REPORT_WEB_APP_URL: ${{ secrets.REPORT_WEB_APP_URL }}
-          REPORT_ACCESS_KEY: ${{ secrets.REPORT_ACCESS_KEY }}
         run: |
           export BACKUP_FILE="$(ls -1t backups/*.json.gz | head -1)"
           bash scripts/restore-report-backup.sh
