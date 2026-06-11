@@ -489,6 +489,9 @@ java -jar target/report-web-app-1.0-SNAPSHOT.jar
 | `seed-v2.ps1` | Полные прогоны по категориям (UTF-8 POST) |
 | `seed-demo-reports.ps1` | Альтернативный seed |
 | `seed-allure-stacktrace-test.ps1` | Прогон для проверки Allure |
+| `scripts/download-report-backup.ps1` | Скачать архив истории с API |
+| `scripts/download-report-backup.sh` | То же для bash / GitLab CI |
+| `scripts/restore-report-backup.sh` | Восстановить историю на стенде из `.json.gz` |
 
 Примеры тел сообщений: каталог `seed-payloads/`.
 
@@ -516,6 +519,66 @@ java -jar target/report-web-app-1.0-SNAPSHOT.jar
 ```bash
 curl -F "file=@history-20260521-120000.json.gz" "http://localhost:8080/api/backup/upload?restore=true"
 ```
+
+### Копия архива в CI (переживает передеплой Timeweb)
+
+На Timeweb диск контейнера эфемерный: `./data` и `./backups` пропадают при редеплое. Скрипт логинится по **ключу доступа**, создаёт архив через API и скачивает его локально / в artifact pipeline.
+
+| Скрипт | Назначение |
+|--------|------------|
+| `scripts/download-report-backup.sh` | Создать и скачать архив (bash, CI) |
+| `scripts/download-report-backup.ps1` | То же локально в Windows |
+| `scripts/restore-report-backup.sh` | Загрузить `.json.gz` на стенд с `restore=true` |
+
+**Переменные:** `REPORT_WEB_APP_URL`, `REPORT_ACCESS_KEY`; для restore — `BACKUP_FILE`.
+
+Локально (PowerShell):
+
+```powershell
+$env:REPORT_WEB_APP_URL = "http://localhost:8080"
+$env:REPORT_ACCESS_KEY = "ваш-ключ"
+.\scripts\download-report-backup.ps1
+```
+
+Локально (bash):
+
+```bash
+export REPORT_WEB_APP_URL=http://localhost:8080
+export REPORT_ACCESS_KEY=ваш-ключ
+bash scripts/download-report-backup.sh
+```
+
+#### GitHub Actions (рекомендуется)
+
+Файл `.gitlab-ci.yml` **не подходит** для GitHub — другой синтаксис. Используйте workflows в `.github/workflows/`:
+
+| Workflow | Назначение |
+|----------|------------|
+| `report-backup.yml` | Расписание + ручной запуск, artifact 90 дней |
+| `restore-report-backup.yml` | Восстановление на стенд из artifact прошлого run |
+
+**Настройка:**
+
+1. Запушьте репозиторий на GitHub (workflows подхватятся автоматически).
+2. **Settings → Secrets and variables → Actions → New repository secret:**
+
+| Secret | Пример |
+|--------|--------|
+| `REPORT_WEB_APP_URL` | `https://report.example.com` |
+| `REPORT_ACCESS_KEY` | ключ из админки (отдельный ключ для CI, не пароль админа) |
+
+3. **Расписание:** в `report-backup.yml` уже задано `cron: "0 4 * * *"` (04:00 UTC). Для Москвы (UTC+3) это 07:00; измените cron при необходимости.
+4. **Ручной backup:** вкладка **Actions** → **Report backup** → **Run workflow**.
+5. **Скачать архив:** откройте успешный run → внизу **Artifacts** → `report-history-…`.
+6. **После передеплоя** (один из вариантов):
+   - скачать artifact → `/backup` в UI;
+   - **Actions → Restore report backup** → указать `backup_run_id` (число из URL `…/actions/runs/12345678`).
+
+> Scheduled workflows на GitHub работают только если в репозитории был commit за последние ~60 дней.
+
+#### GitLab CI (альтернатива)
+
+Если репозиторий на GitLab — `.gitlab-ci.yml`. **Settings → CI/CD → Variables** (masked): те же `REPORT_WEB_APP_URL`, `REPORT_ACCESS_KEY`. **Build → Pipeline schedules** — cron `0 4 * * *`.
 
 ## Авторизация
 

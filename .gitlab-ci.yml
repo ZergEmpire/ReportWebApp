@@ -1,0 +1,44 @@
+# Scheduled backup: GitLab → Build → Pipeline schedules (e.g. 0 4 * * *).
+# CI/CD variables (masked): REPORT_WEB_APP_URL, REPORT_ACCESS_KEY
+
+stages:
+  - backup
+
+download-report-backup:
+  stage: backup
+  image: alpine:3.20
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web" && $RUN_REPORT_BACKUP == "true"
+  before_script:
+    - apk add --no-cache bash curl jq
+  script:
+    - bash scripts/download-report-backup.sh
+  artifacts:
+    name: report-history-$CI_PIPELINE_ID
+    paths:
+      - backups/
+    expire_in: 90 days
+
+restore-report-backup:
+  stage: backup
+  image: alpine:3.20
+  when: manual
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+  before_script:
+    - apk add --no-cache bash curl jq
+  script:
+    - |
+      if [ -z "${BACKUP_FILE:-}" ]; then
+        BACKUP_FILE="$(ls -1t backups/*.json.gz 2>/dev/null | head -1)"
+      fi
+      if [ -z "${BACKUP_FILE:-}" ] || [ ! -f "$BACKUP_FILE" ]; then
+        echo "Set BACKUP_FILE or run after download-report-backup (artifact in backups/)." >&2
+        exit 1
+      fi
+      export BACKUP_FILE
+      bash scripts/restore-report-backup.sh
+  needs:
+    - job: download-report-backup
+      optional: true

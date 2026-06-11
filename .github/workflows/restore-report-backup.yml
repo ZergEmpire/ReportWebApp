@@ -1,0 +1,41 @@
+# Восстановление истории на стенде из artifact job Report backup (после передеплоя).
+#
+# Secrets: REPORT_WEB_APP_URL, REPORT_ACCESS_KEY
+#
+# Actions → Restore report backup → Run workflow
+#   backup_run_id — номер run workflow «Report backup» (из URL: .../actions/runs/12345)
+
+name: Restore report backup
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: "Run ID workflow Report backup (число из URL actions/runs/...)"
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download backup artifact from run
+        uses: actions/download-artifact@v4
+        with:
+          name: report-history-${{ inputs.backup_run_id }}
+          run-id: ${{ inputs.backup_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restore on server
+        env:
+          REPORT_WEB_APP_URL: ${{ secrets.REPORT_WEB_APP_URL }}
+          REPORT_ACCESS_KEY: ${{ secrets.REPORT_ACCESS_KEY }}
+        run: |
+          export BACKUP_FILE="$(ls -1t backups/*.json.gz | head -1)"
+          bash scripts/restore-report-backup.sh
