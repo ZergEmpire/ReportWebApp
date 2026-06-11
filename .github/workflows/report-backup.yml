@@ -1,10 +1,9 @@
 # Скачивание history-*.json.gz с Report Web App (расписание или вручную).
 #
-# Secrets (Settings → Secrets and variables → Actions):
+# Secrets в Environment «Report web app» (Settings → Environments):
 #   REPORT_WEB_APP_URL, REPORT_ACCESS_KEY
 #
-# Расписание: ежедневно 04:00 UTC (настройте cron под свой часовой пояс).
-# Вручную: Actions → Report backup → Run workflow.
+# Расписание: ежедневно 04:00 UTC. Вручную: Actions → Report backup → Run workflow.
 
 name: Report backup
 
@@ -19,6 +18,7 @@ permissions:
 jobs:
   download:
     runs-on: ubuntu-latest
+    environment: Report web app
     steps:
       - uses: actions/checkout@v4
 

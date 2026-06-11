@@ -560,12 +560,14 @@ bash scripts/download-report-backup.sh
 **Настройка:**
 
 1. Запушьте репозиторий на GitHub (workflows подхватятся автоматически).
-2. **Settings → Secrets and variables → Actions → New repository secret:**
+2. **Settings → Environments → Report web app → Environment secrets** (оба значения — secrets, не variables):
 
 | Secret | Пример |
 |--------|--------|
 | `REPORT_WEB_APP_URL` | `https://report.example.com` |
 | `REPORT_ACCESS_KEY` | ключ из админки (отдельный ключ для CI, не пароль админа) |
+
+Workflow привязан к environment `Report web app` — без этой привязки secrets environment не подставятся в job.
 
 3. **Расписание:** в `report-backup.yml` уже задано `cron: "0 4 * * *"` (04:00 UTC). Для Москвы (UTC+3) это 07:00; измените cron при необходимости.
 4. **Ручной backup:** вкладка **Actions** → **Report backup** → **Run workflow**.
