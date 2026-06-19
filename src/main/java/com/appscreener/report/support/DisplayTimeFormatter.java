@@ -28,6 +28,14 @@ public class DisplayTimeFormatter {
         return defaultFormatter.format(instant);
     }
 
+    /** Время прогона с подписью пояса, например «19.06.2026 16:50 МСК». */
+    public String formatWithZone(Instant instant) {
+        if (instant == null) {
+            return "";
+        }
+        return format(instant) + " " + zoneShortLabel();
+    }
+
     public String format(Instant instant, String pattern) {
         if (instant == null) {
             return "";

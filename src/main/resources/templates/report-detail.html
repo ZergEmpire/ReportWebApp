@@ -20,7 +20,7 @@
             <h1><span class="hero-icon">📣</span> <span th:text="${run.title}">Уведомление</span></h1>
             <p class="hero-meta">
                 <span th:text="${run.categoryIcon + ' ' + run.categoryLabel}">cat</span>
-                · <span th:text="${@displayTime.format(run.receivedAt) + ' ' + @displayTime.zoneShortLabel()}">time</span>
+                · <span th:text="${displayTime.formatWithZone(run.receivedAt)}">time</span>
             </p>
         </article>
 
@@ -56,7 +56,7 @@
             <h1><span class="hero-icon">📝</span> SUMMARY <span th:if="${run.summaryDate != null}" th:text="'(' + ${run.summaryDate} + ')'">(date)</span></h1>
             <p class="hero-meta">
                 <span th:text="${run.categoryIcon + ' ' + run.categoryLabel}">cat</span>
-                · <span th:text="${@displayTime.format(run.receivedAt) + ' ' + @displayTime.zoneShortLabel()}">time</span>
+                · <span th:text="${displayTime.formatWithZone(run.receivedAt)}">time</span>
             </p>
         </article>
 
@@ -110,7 +110,7 @@
             <h1><span class="hero-icon">☑️</span> Результаты тестирования приложения appScreener</h1>
             <p class="hero-meta">
                 <span th:text="${run.categoryIcon + ' ' + run.categoryLabel}">cat</span>
-                · <span th:text="${@displayTime.format(run.receivedAt) + ' ' + @displayTime.zoneShortLabel()}">time</span>
+                · <span th:text="${displayTime.formatWithZone(run.receivedAt)}">time</span>
             </p>
         </article>
 

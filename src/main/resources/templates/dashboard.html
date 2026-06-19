@@ -57,7 +57,7 @@
                           th:text="${r.failedTests != null and r.failedTests > 0} ? 'есть ошибки' : 'успешно'"></span>
                     <span class="badge" th:if="${r.pinned}">📌</span>
                 </span>
-                <span class="time" th:text="${@displayTime.format(r.receivedAt) + ' ' + @displayTime.zoneShortLabel()}">time</span>
+                <span class="time" th:text="${displayTime.formatWithZone(r.receivedAt)}">time</span>
             </DIV>
             <h3 th:text="${r.title}">Title</h3>
             <p class="stats-line subtle" th:if="${r.notification and r.standUrl != null}" th:text="${r.standUrl}"></p>

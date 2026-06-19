@@ -88,7 +88,7 @@
                     <span th:if="${b.runCount == null}">—</span>
                 </td>
                 <td th:text="${#numbers.formatDecimal(b.sizeBytes / 1024.0, 1, 1)} + ' KB'">0 KB</td>
-                <td th:text="${@displayTime.format(b.createdAt) + ' ' + @displayTime.zoneShortLabel()}">date</td>
+                <td th:text="${displayTime.formatWithZone(b.createdAt)}">date</td>
                 <td class="backup-row-actions">
                     <a th:href="@{/api/backup/{f}/download(f=${b.fileName})}" class="btn-link">Скачать</a>
                     <form th:action="@{/backup/restore}" method="post" class="inline-form"

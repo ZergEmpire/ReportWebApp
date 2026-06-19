@@ -8,6 +8,7 @@ COPY seed-payloads ./seed-payloads
 RUN mvn -q package -DskipTests
 
 FROM eclipse-temurin:21-jre-jammy
+ENV TZ=Europe/Moscow
 WORKDIR /app
 
 RUN useradd --system --uid 1000 --create-home appuser \
@@ -21,4 +22,4 @@ EXPOSE 8080
 
 ENV SPRING_PROFILES_ACTIVE=docker
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Europe/Moscow", "-jar", "/app/app.jar"]
