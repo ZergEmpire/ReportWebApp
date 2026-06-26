@@ -152,7 +152,7 @@
 
         <section class="tests-block fail-block" th:if="${!run.failedTestsList.isEmpty()}">
             <h2 class="block-title">❌ Упавшие тесты с ошибкой</h2>
-            <p class="hint" th:if="${allureConfigured}">Тесты со ссылкой на Allure TestOps — кнопка загрузки stacktrace через API.</p>
+            <p class="hint" th:if="${allureConfigured}">Тесты со ссылкой на Allure TestOps — stacktrace и скриншот падения через API.</p>
             <p class="hint muted" th:if="${!allureConfigured}">Stacktrace из Allure недоступен: на сервере не задан <code>ALLURE_TESTOPS_TOKEN</code>.</p>
             <ul class="test-items">
                 <li th:each="t : ${run.failedTestsList}"
@@ -168,8 +168,18 @@
                                     aria-expanded="false">
                                 Stacktrace из Allure
                             </button>
+                            <button type="button"
+                                    class="btn-action js-screenshot-toggle"
+                                    th:attr="data-allure-id=${t.allureTestResultId}"
+                                    aria-expanded="false">
+                                Скриншот падения
+                            </button>
                         </DIV>
                         <pre class="raw-block js-stacktrace-panel" hidden="hidden"></pre>
+                        <DIV class="screenshot-panel js-screenshot-panel" hidden="hidden">
+                            <p class="screenshot-placeholder">Загрузка скриншота…</p>
+                            <img class="screenshot-img" alt="Скриншот падения из Allure TestOps" hidden="hidden"/>
+                        </DIV>
                     </DIV>
                 </li>
             </ul>

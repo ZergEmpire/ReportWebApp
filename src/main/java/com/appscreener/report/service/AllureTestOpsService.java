@@ -1,6 +1,7 @@
 package com.appscreener.report.service;
 
 import com.appscreener.report.config.AllureTestOpsProperties;
+import com.appscreener.report.model.AllureAttachmentMeta;
 import com.appscreener.report.model.AllureTestResultDetails;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +16,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,6 +100,101 @@ public class AllureTestOpsService {
         } catch (Exception e) {
             throw new IllegalStateException("Не удалось разобрать ответ Allure TestOps: " + e.getMessage(), e);
         }
+    }
+
+    public List<AllureAttachmentMeta> listTestResultAttachments(long testResultId) {
+        if (!properties.isEnabled()) {
+            throw new IllegalStateException(
+                    "Allure TestOps не настроен: задайте report.allure.api-token (или ALLURE_TESTOPS_TOKEN)");
+        }
+        String token = obtainAccessToken();
+        String apiUrl = properties.apiBase() + "/api/testresult/attachment?testResultId=" + testResultId + "&size=100";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setAccept(MediaType.parseMediaTypes("application/json"));
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                apiUrl,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new IllegalStateException(
+                    "Allure TestOps ответил " + response.getStatusCode()
+                            + " для вложений testresult/" + testResultId);
+        }
+
+        try {
+            return parseAttachmentList(objectMapper.readTree(response.getBody()));
+        } catch (Exception e) {
+            throw new IllegalStateException("Не удалось разобрать список вложений Allure TestOps: " + e.getMessage(), e);
+        }
+    }
+
+    public Optional<AllureAttachmentMeta> findScreenshotAttachment(long testResultId) {
+        return AllureAttachmentSelector.pickScreenshot(listTestResultAttachments(testResultId));
+    }
+
+    public byte[] fetchAttachmentContent(long attachmentId) {
+        if (!properties.isEnabled()) {
+            throw new IllegalStateException(
+                    "Allure TestOps не настроен: задайте report.allure.api-token (или ALLURE_TESTOPS_TOKEN)");
+        }
+        String token = obtainAccessToken();
+        String apiUrl = properties.apiBase() + "/api/testresult/attachment/" + attachmentId + "/content";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+
+        ResponseEntity<byte[]> response = restTemplate.exchange(
+                apiUrl,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                byte[].class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new IllegalStateException(
+                    "Allure TestOps ответил " + response.getStatusCode() + " для attachment/" + attachmentId);
+        }
+        return response.getBody();
+    }
+
+    private List<AllureAttachmentMeta> parseAttachmentList(JsonNode root) {
+        List<AllureAttachmentMeta> result = new ArrayList<>();
+        JsonNode items = root;
+        if (root.has("content") && root.get("content").isArray()) {
+            items = root.get("content");
+        } else if (!root.isArray()) {
+            return result;
+        }
+        for (JsonNode node : items) {
+            if (node == null || node.isNull()) {
+                continue;
+            }
+            long id = node.path("id").asLong(0);
+            if (id <= 0) {
+                continue;
+            }
+            AllureAttachmentMeta meta = new AllureAttachmentMeta();
+            meta.setId(id);
+            meta.setName(textOrNull(node, "name"));
+            meta.setContentType(firstNonBlank(
+                    textOrNull(node, "contentType"),
+                    textOrNull(node, "mimeType"),
+                    textOrNull(node, "type")
+            ));
+            if (node.has("contentLength") && !node.get("contentLength").isNull()) {
+                meta.setSizeBytes(node.get("contentLength").asLong());
+            } else if (node.has("size") && !node.get("size").isNull()) {
+                meta.setSizeBytes(node.get("size").asLong());
+            }
+            result.add(meta);
+        }
+        return result;
     }
 
     private synchronized String obtainAccessToken() {

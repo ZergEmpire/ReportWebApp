@@ -1,8 +1,11 @@
 package com.appscreener.report.controller;
 
+import com.appscreener.report.model.AllureAttachmentMeta;
 import com.appscreener.report.model.AllureTestResultDetails;
 import com.appscreener.report.service.AllureTestOpsService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/allure")
@@ -35,12 +39,52 @@ public class AllureTestOpsController {
             AllureTestResultDetails details = allureTestOpsService.fetchTestResult(testResultId);
             return ResponseEntity.ok(details);
         } catch (IllegalStateException e) {
-            Map<String, Object> err = new LinkedHashMap<>();
-            err.put("error", e.getMessage());
-            HttpStatus status = allureTestOpsService.isConfigured()
-                    ? HttpStatus.BAD_GATEWAY
-                    : HttpStatus.SERVICE_UNAVAILABLE;
-            return ResponseEntity.status(status).body(err);
+            return allureError(e);
         }
+    }
+
+    /**
+     * Скриншот падения из вложений test result (проксирует Allure TestOps).
+     */
+    @GetMapping("/testresult/{testResultId}/screenshot")
+    public ResponseEntity<?> screenshot(@PathVariable long testResultId) {
+        try {
+            Optional<AllureAttachmentMeta> attachment = allureTestOpsService.findScreenshotAttachment(testResultId);
+            if (attachment.isEmpty()) {
+                Map<String, Object> err = new LinkedHashMap<>();
+                err.put("error", "Скриншот не найден среди вложений test result " + testResultId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+            }
+            AllureAttachmentMeta meta = attachment.get();
+            byte[] content = allureTestOpsService.fetchAttachmentContent(meta.getId());
+            String contentType = meta.getContentType();
+            if (contentType == null || contentType.isBlank()) {
+                contentType = MediaType.IMAGE_PNG_VALUE;
+            }
+            String fileName = safeFileName(meta.getName(), testResultId);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                    .body(content);
+        } catch (IllegalStateException e) {
+            return allureError(e);
+        }
+    }
+
+    private ResponseEntity<Map<String, Object>> allureError(IllegalStateException e) {
+        Map<String, Object> err = new LinkedHashMap<>();
+        err.put("error", e.getMessage());
+        HttpStatus status = allureTestOpsService.isConfigured()
+                ? HttpStatus.BAD_GATEWAY
+                : HttpStatus.SERVICE_UNAVAILABLE;
+        return ResponseEntity.status(status).body(err);
+    }
+
+    private static String safeFileName(String name, long testResultId) {
+        if (name == null || name.isBlank()) {
+            return "screenshot-" + testResultId + ".png";
+        }
+        String cleaned = name.replaceAll("[^a-zA-Z0-9._-]", "_");
+        return cleaned.isBlank() ? "screenshot-" + testResultId + ".png" : cleaned;
     }
 }
