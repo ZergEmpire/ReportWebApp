@@ -623,7 +623,7 @@ Workflow привязан к environment `Report web app` — без этой п
 | Уведомление не в той вкладке | Меняется **`message_thread_id` в URL/body**, не текст сообщения |
 | Списки не в том прогоне | Сохраните `message_id` после сводки и передайте его как `run_id` во все списки |
 | Кракозябры в PowerShell | POST UTF-8, см. `seed-v2.ps1` |
-| После деплоя старый UI (нет кнопки скриншота) | В логе деплоя всё `CACHED` — задеплойте **новый коммит** или увеличьте `CACHEBUST` в env Timeweb и пересоберите |
+| После деплоя старый UI (нет кнопки скриншота) | Проверьте `https://…/build-id.txt` (должно быть `features=screenshot`) и размер `/js/report-detail.js` (~6600 байт). В compose включён `no_cache: true` — при деплое в логе не должно быть только `CACHED` |
 | Maven `UnresolvableModelException` при деплое | Сбой сети до Maven Central на стороне Timeweb — **повторите деплой**; в Dockerfile есть retry. Если не помогает — подождите и попробуйте снова |
 | `UnsupportedClassVersionError` | JDK 21 |
 | Новая категория не видна | Проверьте `message_thread_id` в CI и код вкладки в URL |

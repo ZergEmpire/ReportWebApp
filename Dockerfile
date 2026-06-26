@@ -3,7 +3,6 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Слой зависимостей кэшируется, пока не меняется pom.xml.
 COPY pom.xml .
 RUN for attempt in 1 2 3 4 5; do \
       mvn -B dependency:go-offline -DskipTests && break; \
@@ -14,10 +13,8 @@ RUN for attempt in 1 2 3 4 5; do \
 COPY src ./src
 COPY seed-payloads ./seed-payloads
 
-# CACHEBUST: сбрасывает только финальную сборку (без повторной загрузки pom-зависимостей).
-# Увеличьте CACHEBUST в env Timeweb или задеплойте новый коммит.
 ARG CACHEBUST=1
-RUN echo "cachebust=${CACHEBUST}" && \
+RUN printf 'build=%s\nfeatures=screenshot\n' "${CACHEBUST}" > src/main/resources/static/build-id.txt && \
     for attempt in 1 2 3 4 5; do \
       mvn -B package -DskipTests && break; \
       echo "Maven package attempt ${attempt} failed, retry in 15s..."; \

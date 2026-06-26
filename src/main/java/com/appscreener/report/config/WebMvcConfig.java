@@ -23,6 +23,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/pinChatMessage",
                         "/css/**",
                         "/js/**",
+                        "/build-id.txt",
                         "/favicon.ico",
                         "/error"
                 );

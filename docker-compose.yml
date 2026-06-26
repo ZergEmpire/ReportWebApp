@@ -6,8 +6,9 @@ services:
   report-web-app:
     build:
       context: .
+      no_cache: true
       args:
-        CACHEBUST: "${CACHEBUST:-2}"
+        CACHEBUST: "${CACHEBUST:-3}"
     ports:
       - "8080"
     environment:
