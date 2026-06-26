@@ -624,6 +624,7 @@ Workflow привязан к environment `Report web app` — без этой п
 | Списки не в том прогоне | Сохраните `message_id` после сводки и передайте его как `run_id` во все списки |
 | Кракозябры в PowerShell | POST UTF-8, см. `seed-v2.ps1` |
 | После деплоя старый UI (нет кнопки скриншота) | В логе деплоя всё `CACHED` — задеплойте **новый коммит** или увеличьте `CACHEBUST` в env Timeweb и пересоберите |
+| Maven `UnresolvableModelException` при деплое | Сбой сети до Maven Central на стороне Timeweb — **повторите деплой**; в Dockerfile есть retry. Если не помогает — подождите и попробуйте снова |
 | `UnsupportedClassVersionError` | JDK 21 |
 | Новая категория не видна | Проверьте `message_thread_id` в CI и код вкладки в URL |
 

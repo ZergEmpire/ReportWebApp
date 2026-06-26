@@ -1,14 +1,28 @@
 # syntax=docker/dockerfile:1
 
 FROM maven:3.9-eclipse-temurin-21 AS build
-# CACHEBUST: при повторном деплое того же коммита Timeweb может взять слои из кэша.
-# Задайте CACHEBUST в env Timeweb (например, дата) или деплойте новый коммит.
-ARG CACHEBUST=1
 WORKDIR /app
+
+# Слой зависимостей кэшируется, пока не меняется pom.xml.
 COPY pom.xml .
+RUN for attempt in 1 2 3 4 5; do \
+      mvn -B dependency:go-offline -DskipTests && break; \
+      echo "Maven dependency:go-offline attempt ${attempt} failed, retry in 15s..."; \
+      sleep 15; \
+    done
+
 COPY src ./src
 COPY seed-payloads ./seed-payloads
-RUN echo "cachebust=${CACHEBUST}" && mvn -q package -DskipTests
+
+# CACHEBUST: сбрасывает только финальную сборку (без повторной загрузки pom-зависимостей).
+# Увеличьте CACHEBUST в env Timeweb или задеплойте новый коммит.
+ARG CACHEBUST=1
+RUN echo "cachebust=${CACHEBUST}" && \
+    for attempt in 1 2 3 4 5; do \
+      mvn -B package -DskipTests && break; \
+      echo "Maven package attempt ${attempt} failed, retry in 15s..."; \
+      sleep 15; \
+    done
 
 FROM eclipse-temurin:21-jre-jammy
 ENV TZ=Europe/Moscow
