@@ -19,10 +19,13 @@ RUN JS_SIZE=$(wc -c < src/main/resources/static/js/report-detail.js) && \
     test "${JS_SIZE}" -gt 5000 || (echo "ERROR: report-detail.js looks stale (${JS_SIZE} bytes)" && exit 1) && \
     printf 'build=%s\nfeatures=screenshot\n' "${CACHEBUST}" > src/main/resources/static/build-id.txt && \
     for attempt in 1 2 3 4 5; do \
-      mvn -B package -DskipTests && break; \
+      mvn -B clean package -DskipTests && break; \
       echo "Maven package attempt ${attempt} failed, retry in 15s..."; \
       sleep 15; \
-    done
+    done && \
+    JAR_JS_SIZE=$(unzip -p target/report-web-app-*.jar BOOT-INF/classes/static/js/report-detail.js | wc -c) && \
+    echo "report-detail.js in jar bytes=${JAR_JS_SIZE}" && \
+    test "${JAR_JS_SIZE}" -gt 5000 || (echo "ERROR: stale report-detail.js in jar (${JAR_JS_SIZE} bytes)" && exit 1)
 
 FROM eclipse-temurin:21-jre-jammy
 ENV TZ=Europe/Moscow
