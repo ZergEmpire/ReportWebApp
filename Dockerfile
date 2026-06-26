@@ -14,7 +14,10 @@ COPY src ./src
 COPY seed-payloads ./seed-payloads
 
 ARG CACHEBUST=1
-RUN printf 'build=%s\nfeatures=screenshot\n' "${CACHEBUST}" > src/main/resources/static/build-id.txt && \
+RUN JS_SIZE=$(wc -c < src/main/resources/static/js/report-detail.js) && \
+    echo "report-detail.js bytes=${JS_SIZE}, cachebust=${CACHEBUST}" && \
+    test "${JS_SIZE}" -gt 5000 || (echo "ERROR: report-detail.js looks stale (${JS_SIZE} bytes)" && exit 1) && \
+    printf 'build=%s\nfeatures=screenshot\n' "${CACHEBUST}" > src/main/resources/static/build-id.txt && \
     for attempt in 1 2 3 4 5; do \
       mvn -B package -DskipTests && break; \
       echo "Maven package attempt ${attempt} failed, retry in 15s..."; \

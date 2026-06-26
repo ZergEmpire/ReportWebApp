@@ -1,14 +1,12 @@
 # Базовый compose для Timeweb App Platform (Docker Compose).
+# Образ собирается в GitHub Actions → ghcr.io/zergempire/report-web-app:latest
+# Локально: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 # В манифесте нельзя использовать volumes — см. https://timeweb.cloud/docs/apps/deploying-with-docker-compose
-# Локально с постоянными томами: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 
 services:
   report-web-app:
-    build:
-      context: .
-      no_cache: true
-      args:
-        CACHEBUST: "${CACHEBUST:-3}"
+    image: ghcr.io/zergempire/report-web-app:latest
+    pull_policy: always
     ports:
       - "8080"
     environment:

@@ -1,6 +1,7 @@
-# Локальная разработка: именованные тома для H2 и бэкапов (не используется на Timeweb).
+# Локальная разработка: build + именованные тома (не используется на Timeweb).
 services:
   report-web-app:
+    build: .
     image: report-web-app:local
     ports:
       - "8080:8080"
