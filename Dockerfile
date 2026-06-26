@@ -1,11 +1,14 @@
 # syntax=docker/dockerfile:1
 
 FROM maven:3.9-eclipse-temurin-21 AS build
+# CACHEBUST: при повторном деплое того же коммита Timeweb может взять слои из кэша.
+# Задайте CACHEBUST в env Timeweb (например, дата) или деплойте новый коммит.
+ARG CACHEBUST=1
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 COPY seed-payloads ./seed-payloads
-RUN mvn -q package -DskipTests
+RUN echo "cachebust=${CACHEBUST}" && mvn -q package -DskipTests
 
 FROM eclipse-temurin:21-jre-jammy
 ENV TZ=Europe/Moscow

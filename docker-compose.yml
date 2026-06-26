@@ -4,7 +4,10 @@
 
 services:
   report-web-app:
-    build: .
+    build:
+      context: .
+      args:
+        CACHEBUST: ${CACHEBUST:-1}
     ports:
       - "8080"
     environment:
