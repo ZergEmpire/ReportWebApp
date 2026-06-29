@@ -1,7 +1,9 @@
 # Локальная разработка: build + именованные тома (не используется на Timeweb).
 services:
   report-web-app:
-    build: .
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     image: report-web-app:local
     ports:
       - "8080:8080"
