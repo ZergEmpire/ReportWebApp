@@ -37,6 +37,8 @@ jobs:
           file: docker/Dockerfile
           push: true
           no-cache: true
+          build-args: |
+            CACHEBUST=${{ github.sha }}
           tags: |
             ${{ steps.image.outputs.name }}:latest
             ${{ steps.image.outputs.name }}:${{ github.sha }}

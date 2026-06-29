@@ -23,12 +23,21 @@ RUN JS_SIZE=$(wc -c < src/main/resources/static/js/report-detail.js) && \
       echo "Maven package attempt ${attempt} failed, retry in 15s..."; \
       sleep 15; \
     done && \
-    JAR_FILE=$(ls target/report-web-app-*.jar | head -1) && \
+    JAR_FILE="target/report-web-app-1.0-SNAPSHOT.jar" && \
+    test -f "${JAR_FILE}" || (echo "ERROR: missing ${JAR_FILE}" && exit 1) && \
     rm -rf /tmp/jarcheck && mkdir -p /tmp/jarcheck && \
     cd /tmp/jarcheck && jar xf "/app/${JAR_FILE}" BOOT-INF/classes/static/js/report-detail.js && \
     JAR_JS_SIZE=$(wc -c < BOOT-INF/classes/static/js/report-detail.js) && \
     echo "report-detail.js in jar bytes=${JAR_JS_SIZE}" && \
     test "${JAR_JS_SIZE}" -gt 5000 || (echo "ERROR: stale report-detail.js in jar (${JAR_JS_SIZE} bytes)" && exit 1)
+
+FROM eclipse-temurin:21-jre-jammy AS verify
+COPY --from=build /app/target/report-web-app-1.0-SNAPSHOT.jar /tmp/app.jar
+RUN apt-get update && apt-get install -y --no-install-recommends unzip \
+    && rm -rf /var/lib/apt/lists/* \
+    && JS_SIZE=$(unzip -p /tmp/app.jar BOOT-INF/classes/static/js/report-detail.js | wc -c) \
+    && echo "runtime jar report-detail.js bytes=${JS_SIZE}" \
+    && test "${JS_SIZE}" -gt 5000 || (echo "ERROR: runtime jar stale (${JS_SIZE} bytes)" && exit 1)
 
 FROM eclipse-temurin:21-jre-jammy
 ENV TZ=Europe/Moscow
@@ -38,7 +47,7 @@ RUN useradd --system --uid 1000 --create-home appuser \
     && mkdir -p /app/data /app/backups \
     && chown -R appuser:appuser /app
 
-COPY --from=build /app/target/report-web-app-*.jar /app/app.jar
+COPY --from=verify /tmp/app.jar /app/app.jar
 USER appuser
 
 EXPOSE 8080
