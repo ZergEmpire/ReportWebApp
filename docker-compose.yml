@@ -6,7 +6,7 @@
 
 services:
   report-web-app:
-    image: ghcr.io/zergempire/report-web-app:78a782120386624e35dc690f0e3211db599dae79
+    image: ghcr.io/zergempire/report-web-app:42b13b45afe32263e5c79bca944ce57d3ccce6ca
     ports:
       - "8080"
     environment:
