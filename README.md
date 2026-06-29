@@ -607,7 +607,7 @@ Workflow привязан к environment `Report web app` — без этой п
 | `REPORT_AUTH_ADMIN_PASSWORD` | Пароль админа (**обязательно** смените на стенде) |
 | `REPORT_AUTH_INITIAL_ACCESS_KEY` | Стартовый ключ доступа при развёртке (задайте явно в env) |
 
-**Docker на Timeweb:** образ собирается в GitHub Actions (workflow `Docker image`) и публикуется в `ghcr.io/zergempire/report-web-app:latest`. После первого push откройте **GitHub → Packages → report-web-app → Package settings → Change visibility → Public**, иначе Timeweb не сможет скачать образ.
+**Docker на Timeweb:** образ собирается в GitHub Actions (workflow `Docker image`) и публикуется в `ghcr.io/zergempire/report-web-app`. В `docker-compose.yml` тег образа **фиксируется на SHA коммита** (обновляется автоматически после сборки), чтобы Timeweb не использовал закэшированный `:latest`.
 
 Переменная **`REPORT_AUTH_ENABLED` больше не используется** — авторизация UI всегда включена в коде.  
 Если на стенде осталось `REPORT_AUTH_ENABLED=false` от старых настроек, **удалите её** из панели Timeweb (иначе в старых сборках UI открывался без входа).
@@ -624,7 +624,7 @@ Workflow привязан к environment `Report web app` — без этой п
 | Уведомление не в той вкладке | Меняется **`message_thread_id` в URL/body**, не текст сообщения |
 | Списки не в том прогоне | Сохраните `message_id` после сводки и передайте его как `run_id` во все списки |
 | Кракозябры в PowerShell | POST UTF-8, см. `seed-v2.ps1` |
-| После деплоя старый UI (нет кнопки скриншота) | Проверьте `https://…/build-id.txt` и размер `/js/report-detail.js` (~6600 байт). Образ должен тянуться с `ghcr.io/zergempire/report-web-app:latest` (см. workflow Docker image) |
+| После деплоя старый UI (нет кнопки скриншота) | Проверьте `https://…/build-id.txt` и размер `/js/report-detail.js` (~6600 байт). В логе деплоя Timeweb должно быть `Pulled` / `Downloading`. Тег образа в `docker-compose.yml` должен совпадать с коммитом сборки в GHCR |
 | Maven `UnresolvableModelException` при деплое | Сбой сети до Maven Central на стороне Timeweb — **повторите деплой**; в `docker/Dockerfile` есть retry. Если не помогает — подождите и попробуйте снова |
 | `UnsupportedClassVersionError` | JDK 21 |
 | Новая категория не видна | Проверьте `message_thread_id` в CI и код вкладки в URL |
