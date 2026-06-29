@@ -23,7 +23,10 @@ RUN JS_SIZE=$(wc -c < src/main/resources/static/js/report-detail.js) && \
       echo "Maven package attempt ${attempt} failed, retry in 15s..."; \
       sleep 15; \
     done && \
-    JAR_JS_SIZE=$(unzip -p target/report-web-app-*.jar BOOT-INF/classes/static/js/report-detail.js | wc -c) && \
+    JAR_FILE=$(ls target/report-web-app-*.jar | head -1) && \
+    rm -rf /tmp/jarcheck && mkdir -p /tmp/jarcheck && \
+    cd /tmp/jarcheck && jar xf "/app/${JAR_FILE}" BOOT-INF/classes/static/js/report-detail.js && \
+    JAR_JS_SIZE=$(wc -c < BOOT-INF/classes/static/js/report-detail.js) && \
     echo "report-detail.js in jar bytes=${JAR_JS_SIZE}" && \
     test "${JAR_JS_SIZE}" -gt 5000 || (echo "ERROR: stale report-detail.js in jar (${JAR_JS_SIZE} bytes)" && exit 1)
 
