@@ -59,12 +59,12 @@
             var doc = new DOMParser().parseFromString(html, 'text/html');
             var body = doc.body;
             var bodyText = (body?.textContent || '').trim();
-            var hasStructuredContent = !!body?.querySelector('table,thead,tbody,tr,td,th,ul,ol,li,dl,pre,code,img,svg,section,article');
-            var hasMeaningfulMarkup = /<(table|thead|tbody|tr|td|th|ul|ol|li|dl|pre|code|img|svg|section|article|div|p|h[1-6])[\s>]/i.test(html);
+            var hasRichHtmlContent = !!body?.querySelector('table,thead,tbody,tr,td,th,img,svg');
+            var hasMeaningfulMarkup = /<(table|thead|tbody|tr|td|th|img|svg)[\s>]/i.test(html);
             return {
                 bodyHtml: body?.innerHTML || '',
                 bodyText: bodyText,
-                renderAsHtml: hasStructuredContent || hasMeaningfulMarkup
+                renderAsHtml: hasRichHtmlContent || hasMeaningfulMarkup
             };
         } catch (e) {
             return {
