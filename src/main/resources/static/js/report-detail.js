@@ -54,6 +54,27 @@
             '</style></head><body><div class="table-wrap">' + html + '</div></body></html>';
     }
 
+    function parseHtmlAttachment(html) {
+        try {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            var body = doc.body;
+            var bodyText = (body?.textContent || '').trim();
+            var hasStructuredContent = !!body?.querySelector('table,thead,tbody,tr,td,th,ul,ol,li,dl,pre,code,img,svg,section,article');
+            var hasMeaningfulMarkup = /<(table|thead|tbody|tr|td|th|ul|ol|li|dl|pre|code|img|svg|section|article|div|p|h[1-6])[\s>]/i.test(html);
+            return {
+                bodyHtml: body?.innerHTML || '',
+                bodyText: bodyText,
+                renderAsHtml: hasStructuredContent || hasMeaningfulMarkup
+            };
+        } catch (e) {
+            return {
+                bodyHtml: '',
+                bodyText: html,
+                renderAsHtml: false
+            };
+        }
+    }
+
     document.querySelectorAll('.js-stacktrace-toggle').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             var id = btn.getAttribute('data-allure-id');
@@ -246,14 +267,26 @@
 
                 if (contentType.includes('text/html')) {
                     var html = await res.text();
-                    var renderedHtml = buildAttachmentHtmlDocument(html);
-                    var htmlUrl = URL.createObjectURL(new Blob([renderedHtml], { type: contentType || 'text/html' }));
-                    frame.dataset.objectUrl = htmlUrl;
-                    frame.srcdoc = renderedHtml;
-                    frame.hidden = false;
-                    placeholder.hidden = true;
-                    openLink.href = htmlUrl;
-                    actions.hidden = false;
+                    var parsed = parseHtmlAttachment(html);
+                    if (parsed.renderAsHtml && parsed.bodyHtml.trim()) {
+                        var renderedHtml = buildAttachmentHtmlDocument(parsed.bodyHtml);
+                        var htmlUrl = URL.createObjectURL(new Blob([renderedHtml], { type: contentType || 'text/html' }));
+                        frame.dataset.objectUrl = htmlUrl;
+                        frame.srcdoc = renderedHtml;
+                        frame.hidden = false;
+                        placeholder.hidden = true;
+                        openLink.href = htmlUrl;
+                        actions.hidden = false;
+                    } else {
+                        var fallbackText = parsed.bodyText || html;
+                        var fallbackTextUrl = URL.createObjectURL(new Blob([fallbackText], { type: 'text/plain' }));
+                        text.dataset.objectUrl = fallbackTextUrl;
+                        text.textContent = fallbackText;
+                        text.hidden = false;
+                        placeholder.hidden = true;
+                        openLink.href = fallbackTextUrl;
+                        actions.hidden = false;
+                    }
                 } else if (contentType.startsWith('text/') || contentType.includes('json') || contentType.includes('xml')) {
                     var textValue = await res.text();
                     var textUrl = URL.createObjectURL(new Blob([textValue], { type: contentType || 'text/plain' }));
