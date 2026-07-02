@@ -6,7 +6,7 @@
 
 services:
   report-web-app:
-    image: ghcr.io/zergempire/report-web-app:19df04401240798397a52b268f627edec6f99319
+    image: ghcr.io/zergempire/report-web-app:b411771face57fcc733e2b85a4e6febfb6145959
     pull_policy: always
     ports:
       - "8080"
