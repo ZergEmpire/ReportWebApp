@@ -28,6 +28,24 @@ class AllureAttachmentSelectorTest {
                 List.of(meta(1, "log.txt", "text/plain"))).isEmpty());
     }
 
+    @Test
+    void picksHtmlAttachmentAsMainContent() {
+        AllureAttachmentMeta image = meta(1, "failure-screenshot.png", "image/png");
+        AllureAttachmentMeta text = meta(2, "run.log", "text/plain");
+        AllureAttachmentMeta html = meta(3, "metrics-report.html", "text/html");
+
+        AllureAttachmentMeta picked = AllureAttachmentSelector.pickMainAttachment(
+                List.of(image, text, html)).orElseThrow();
+
+        assertEquals(3L, picked.getId());
+    }
+
+    @Test
+    void mainAttachmentReturnsEmptyWhenOnlyImages() {
+        assertTrue(AllureAttachmentSelector.pickMainAttachment(
+                List.of(meta(1, "failure-screenshot.png", "image/png"))).isEmpty());
+    }
+
     private static AllureAttachmentMeta meta(long id, String name, String contentType) {
         AllureAttachmentMeta meta = new AllureAttachmentMeta();
         meta.setId(id);

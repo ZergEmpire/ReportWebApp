@@ -174,11 +174,28 @@
                                     aria-expanded="false">
                                 Скриншот падения
                             </button>
+                            <button type="button"
+                                    class="btn-action js-attachment-toggle"
+                                    th:attr="data-allure-id=${t.allureTestResultId}"
+                                    aria-expanded="false">
+                                Attachment из Allure
+                            </button>
                         </DIV>
                         <pre class="raw-block js-stacktrace-panel" hidden="hidden"></pre>
                         <DIV class="screenshot-panel js-screenshot-panel" hidden="hidden">
                             <p class="screenshot-placeholder">Загрузка скриншота…</p>
                             <img class="screenshot-img" alt="Скриншот падения из Allure TestOps" hidden="hidden"/>
+                        </DIV>
+                        <DIV class="attachment-panel js-attachment-panel" hidden="hidden">
+                            <p class="attachment-placeholder">Загрузка attachment…</p>
+                            <div class="attachment-actions" hidden="hidden">
+                                <a class="btn-link btn-sm js-attachment-open" href="#" target="_blank" rel="noopener">Открыть отдельно</a>
+                            </div>
+                            <iframe class="attachment-frame js-attachment-frame"
+                                    title="Attachment из Allure TestOps"
+                                    sandbox="allow-same-origin"
+                                    hidden="hidden"></iframe>
+                            <pre class="raw-block attachment-text js-attachment-text" hidden="hidden"></pre>
                         </DIV>
                     </DIV>
                 </li>

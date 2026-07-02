@@ -61,10 +61,39 @@ public class AllureTestOpsController {
             if (contentType == null || contentType.isBlank()) {
                 contentType = MediaType.IMAGE_PNG_VALUE;
             }
-            String fileName = safeFileName(meta.getName(), testResultId);
+            String fileName = safeFileName(meta.getName(), testResultId, "screenshot.png");
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                    .body(content);
+        } catch (IllegalStateException e) {
+            return allureError(e);
+        }
+    }
+
+    /**
+     * Основной attachment test result (например, HTML-таблица с метриками).
+     */
+    @GetMapping("/testresult/{testResultId}/attachment")
+    public ResponseEntity<?> attachment(@PathVariable long testResultId) {
+        try {
+            Optional<AllureAttachmentMeta> attachment = allureTestOpsService.findMainAttachment(testResultId);
+            if (attachment.isEmpty()) {
+                Map<String, Object> err = new LinkedHashMap<>();
+                err.put("error", "Подходящий attachment не найден среди вложений test result " + testResultId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+            }
+            AllureAttachmentMeta meta = attachment.get();
+            byte[] content = allureTestOpsService.fetchAttachmentContent(meta.getId());
+            String contentType = meta.getContentType();
+            if (contentType == null || contentType.isBlank()) {
+                contentType = MediaType.TEXT_PLAIN_VALUE;
+            }
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + safeFileName(meta.getName(), testResultId, "attachment.txt") + "\"")
+                    .header("X-Allure-Attachment-Name", safeHeaderValue(meta.getName()))
                     .body(content);
         } catch (IllegalStateException e) {
             return allureError(e);
@@ -80,11 +109,26 @@ public class AllureTestOpsController {
         return ResponseEntity.status(status).body(err);
     }
 
-    private static String safeFileName(String name, long testResultId) {
+    private static String safeFileName(String name, long testResultId, String fallback) {
         if (name == null || name.isBlank()) {
-            return "screenshot-" + testResultId + ".png";
+            return fallbackPrefix(fallback, testResultId);
         }
         String cleaned = name.replaceAll("[^a-zA-Z0-9._-]", "_");
-        return cleaned.isBlank() ? "screenshot-" + testResultId + ".png" : cleaned;
+        return cleaned.isBlank() ? fallbackPrefix(fallback, testResultId) : cleaned;
+    }
+
+    private static String fallbackPrefix(String fallback, long testResultId) {
+        int dot = fallback.lastIndexOf('.');
+        if (dot <= 0) {
+            return fallback + "-" + testResultId;
+        }
+        return fallback.substring(0, dot) + "-" + testResultId + fallback.substring(dot);
+    }
+
+    private static String safeHeaderValue(String value) {
+        if (value == null || value.isBlank()) {
+            return "attachment";
+        }
+        return value.replaceAll("[\\r\\n\"]", "_");
     }
 }

@@ -138,6 +138,10 @@ public class AllureTestOpsService {
         return AllureAttachmentSelector.pickScreenshot(listTestResultAttachments(testResultId));
     }
 
+    public Optional<AllureAttachmentMeta> findMainAttachment(long testResultId) {
+        return AllureAttachmentSelector.pickMainAttachment(listTestResultAttachments(testResultId));
+    }
+
     public byte[] fetchAttachmentContent(long attachmentId) {
         if (!properties.isEnabled()) {
             throw new IllegalStateException(

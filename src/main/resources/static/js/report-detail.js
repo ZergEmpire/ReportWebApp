@@ -1,5 +1,5 @@
 /**
- * Stacktrace и скриншот падения из Allure TestOps на странице прогона.
+ * Stacktrace, скриншот и attachment из Allure TestOps на странице прогона.
  */
 (function () {
     function getTestItemBody(btn) {
@@ -16,6 +16,17 @@
         if (busy) {
             btn.textContent = busyText || 'Загрузка…';
         }
+    }
+
+    function readErrorText(res, contentType) {
+        if (contentType.includes('application/json')) {
+            return res.json().then(function (data) {
+                return data.error || ('HTTP ' + res.status);
+            });
+        }
+        return res.text().then(function (text) {
+            return text || ('HTTP ' + res.status);
+        });
     }
 
     document.querySelectorAll('.js-stacktrace-toggle').forEach(function (btn) {
@@ -119,13 +130,7 @@
 
                 if (!res.ok) {
                     panel.classList.add('is-error');
-                    var errText = 'HTTP ' + res.status;
-                    if (contentType.includes('application/json')) {
-                        var errData = await res.json();
-                        errText = errData.error || errText;
-                    } else {
-                        errText = await res.text() || errText;
-                    }
+                    var errText = await readErrorText(res, contentType);
                     placeholder.hidden = false;
                     placeholder.textContent = errText;
                     return;
@@ -150,6 +155,84 @@
                 panel.classList.remove('is-error');
                 panel.dataset.loaded = 'true';
                 btn.textContent = 'Скрыть скриншот';
+            } catch (e) {
+                panel.classList.add('is-error');
+                placeholder.hidden = false;
+                placeholder.textContent = 'Ошибка: ' + e.message;
+            } finally {
+                setBusy(btn, false);
+                if (btn.textContent === 'Загрузка…') {
+                    btn.textContent = labelDefault;
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.js-attachment-toggle').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            var id = btn.getAttribute('data-allure-id');
+            var body = getTestItemBody(btn);
+            var panel = body?.querySelector('.js-attachment-panel');
+            var frame = panel?.querySelector('.js-attachment-frame');
+            var text = panel?.querySelector('.js-attachment-text');
+            var placeholder = panel?.querySelector('.attachment-placeholder');
+            var actions = panel?.querySelector('.attachment-actions');
+            var openLink = panel?.querySelector('.js-attachment-open');
+            if (!id || !panel || !frame || !text || !placeholder || !actions || !openLink) {
+                return;
+            }
+
+            if (panel.dataset.loaded === 'true' && !panel.hidden) {
+                panel.hidden = true;
+                btn.setAttribute('aria-expanded', 'false');
+                btn.textContent = btn.dataset.labelDefault || 'Attachment из Allure';
+                return;
+            }
+
+            var labelDefault = btn.dataset.labelDefault || btn.textContent;
+            setBusy(btn, true, 'Загрузка…');
+            panel.hidden = false;
+            panel.classList.remove('is-error');
+            placeholder.hidden = false;
+            placeholder.textContent = 'Запрос к Allure TestOps…';
+            frame.hidden = true;
+            frame.removeAttribute('srcdoc');
+            text.hidden = true;
+            text.textContent = '';
+            actions.hidden = true;
+            openLink.href = '#';
+            btn.setAttribute('aria-expanded', 'true');
+
+            try {
+                var res = await fetch('/api/allure/testresult/' + id + '/attachment');
+                var contentType = (res.headers.get('content-type') || '').toLowerCase();
+
+                if (!res.ok) {
+                    panel.classList.add('is-error');
+                    placeholder.textContent = await readErrorText(res, contentType);
+                    return;
+                }
+
+                var attachmentUrl = '/api/allure/testresult/' + id + '/attachment';
+                openLink.href = attachmentUrl;
+                actions.hidden = false;
+
+                if (contentType.includes('text/html')) {
+                    var html = await res.text();
+                    frame.srcdoc = html;
+                    frame.hidden = false;
+                    placeholder.hidden = true;
+                } else if (contentType.startsWith('text/') || contentType.includes('json') || contentType.includes('xml')) {
+                    text.textContent = await res.text();
+                    text.hidden = false;
+                    placeholder.hidden = true;
+                } else {
+                    placeholder.textContent = 'Attachment готов. Лучше открыть его отдельно.';
+                }
+
+                panel.classList.remove('is-error');
+                panel.dataset.loaded = 'true';
+                btn.textContent = 'Скрыть attachment';
             } catch (e) {
                 panel.classList.add('is-error');
                 placeholder.hidden = false;

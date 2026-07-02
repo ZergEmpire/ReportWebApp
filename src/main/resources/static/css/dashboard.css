@@ -566,6 +566,43 @@ a:hover {
     cursor: zoom-in;
 }
 
+.attachment-panel {
+    margin: 0.25rem 0 0;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.attachment-panel.is-error {
+    border-color: var(--danger);
+}
+
+.attachment-panel.is-error .attachment-placeholder {
+    color: #f0b0b0;
+    font-style: normal;
+}
+
+.attachment-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.75rem;
+}
+
+.attachment-frame {
+    display: block;
+    width: 100%;
+    min-height: 520px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    background: #fff;
+}
+
+.attachment-text {
+    margin-top: 0;
+    max-height: 520px;
+}
+
 .suite-body {
     display: flex;
     flex-direction: column;

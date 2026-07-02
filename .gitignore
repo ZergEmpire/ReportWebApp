@@ -2,5 +2,6 @@
 /backups/
 /target/
 application-local.properties
+.deploy/
 .idea/
 /appscreener/
