@@ -239,6 +239,7 @@
             setBusy(btn, true, 'Загрузка…');
             panel.hidden = false;
             panel.classList.remove('is-error');
+            panel.classList.remove('is-text-mode', 'is-html-mode', 'is-binary-mode');
             placeholder.hidden = false;
             placeholder.textContent = 'Запрос к Allure TestOps…';
             frame.hidden = true;
@@ -275,6 +276,7 @@
                         frame.srcdoc = renderedHtml;
                         frame.hidden = false;
                         placeholder.hidden = true;
+                        panel.classList.add('is-html-mode');
                         openLink.href = htmlUrl;
                         actions.hidden = false;
                     } else {
@@ -284,6 +286,7 @@
                         text.textContent = fallbackText;
                         text.hidden = false;
                         placeholder.hidden = true;
+                        panel.classList.add('is-text-mode');
                         openLink.href = fallbackTextUrl;
                         actions.hidden = false;
                     }
@@ -294,12 +297,14 @@
                     text.textContent = textValue;
                     text.hidden = false;
                     placeholder.hidden = true;
+                    panel.classList.add('is-text-mode');
                     openLink.href = textUrl;
                     actions.hidden = false;
                 } else {
                     var blob = await res.blob();
                     var blobUrl = URL.createObjectURL(blob);
                     panel.dataset.objectUrl = blobUrl;
+                    panel.classList.add('is-binary-mode');
                     openLink.href = blobUrl;
                     actions.hidden = false;
                     placeholder.textContent = 'Attachment готов. Откройте его отдельно.';

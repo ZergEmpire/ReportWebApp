@@ -603,6 +603,31 @@ a:hover {
     max-height: 520px;
 }
 
+.attachment-panel.is-text-mode {
+    background: linear-gradient(180deg, rgba(18, 18, 24, 0.96), rgba(10, 10, 14, 0.96));
+}
+
+.attachment-panel.is-text-mode .attachment-actions {
+    margin-bottom: 0.5rem;
+}
+
+.attachment-panel.is-text-mode .attachment-text {
+    max-height: none;
+    margin-top: 0;
+    padding: 0.9rem 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    font-size: 0.84rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+.attachment-panel.is-binary-mode {
+    background: rgba(0, 0, 0, 0.16);
+}
+
 .suite-body {
     display: flex;
     flex-direction: column;
