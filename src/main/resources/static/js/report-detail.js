@@ -36,6 +36,24 @@
         }
     }
 
+    function buildAttachmentHtmlDocument(html) {
+        return '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">' +
+            '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+            '<style>' +
+            'html,body{margin:0;padding:0;background:#0f0f14;color:#e8e4d9;font:14px/1.5 Segoe UI,system-ui,sans-serif;}' +
+            'body{padding:16px;}' +
+            '*{box-sizing:border-box;max-width:100%;}' +
+            'a{color:#e8c547;}' +
+            'table{width:max-content;min-width:100%;border-collapse:collapse;display:block;overflow:auto;background:#111118;}' +
+            'th,td{border:1px solid rgba(255,255,255,.12);padding:8px 10px;vertical-align:top;text-align:left;white-space:pre-wrap;}' +
+            'th{background:#1a1a24;color:#e8c547;position:sticky;top:0;}' +
+            'pre,code{font:12px/1.45 Consolas,monospace;white-space:pre-wrap;word-break:break-word;}' +
+            'pre{background:#08080a;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px;overflow:auto;}' +
+            'img{height:auto;}' +
+            '.table-wrap{overflow:auto;max-width:100%;}' +
+            '</style></head><body><div class="table-wrap">' + html + '</div></body></html>';
+    }
+
     document.querySelectorAll('.js-stacktrace-toggle').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             var id = btn.getAttribute('data-allure-id');
@@ -228,9 +246,10 @@
 
                 if (contentType.includes('text/html')) {
                     var html = await res.text();
-                    var htmlUrl = URL.createObjectURL(new Blob([html], { type: contentType || 'text/html' }));
+                    var renderedHtml = buildAttachmentHtmlDocument(html);
+                    var htmlUrl = URL.createObjectURL(new Blob([renderedHtml], { type: contentType || 'text/html' }));
                     frame.dataset.objectUrl = htmlUrl;
-                    frame.srcdoc = html;
+                    frame.srcdoc = renderedHtml;
                     frame.hidden = false;
                     placeholder.hidden = true;
                     openLink.href = htmlUrl;
