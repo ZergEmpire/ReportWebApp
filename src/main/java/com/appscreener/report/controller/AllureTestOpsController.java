@@ -80,7 +80,7 @@ public class AllureTestOpsController {
             Optional<AllureAttachmentMeta> attachment = allureTestOpsService.findMainAttachment(testResultId);
             if (attachment.isEmpty()) {
                 Map<String, Object> err = new LinkedHashMap<>();
-                err.put("error", "Подходящий attachment не найден среди вложений test result " + testResultId);
+                err.put("error", "Аттачменты отсутствуют в Allure TestOps для test result " + testResultId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
             }
             AllureAttachmentMeta meta = attachment.get();

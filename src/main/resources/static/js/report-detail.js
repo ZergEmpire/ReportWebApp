@@ -29,6 +29,13 @@
         });
     }
 
+    function revokeObjectUrl(target) {
+        if (target?.dataset?.objectUrl) {
+            URL.revokeObjectURL(target.dataset.objectUrl);
+            delete target.dataset.objectUrl;
+        }
+    }
+
     document.querySelectorAll('.js-stacktrace-toggle').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             var id = btn.getAttribute('data-allure-id');
@@ -197,8 +204,11 @@
             placeholder.textContent = 'Запрос к Allure TestOps…';
             frame.hidden = true;
             frame.removeAttribute('srcdoc');
+            revokeObjectUrl(frame);
             text.hidden = true;
             text.textContent = '';
+            revokeObjectUrl(text);
+            revokeObjectUrl(panel);
             actions.hidden = true;
             openLink.href = '#';
             btn.setAttribute('aria-expanded', 'true');
@@ -208,26 +218,39 @@
                 var contentType = (res.headers.get('content-type') || '').toLowerCase();
 
                 if (!res.ok) {
-                    panel.classList.add('is-error');
-                    placeholder.textContent = await readErrorText(res, contentType);
+                    var errorText = await readErrorText(res, contentType);
+                    if (res.status !== 404) {
+                        panel.classList.add('is-error');
+                    }
+                    placeholder.textContent = errorText;
                     return;
                 }
 
-                var attachmentUrl = '/api/allure/testresult/' + id + '/attachment';
-                openLink.href = attachmentUrl;
-                actions.hidden = false;
-
                 if (contentType.includes('text/html')) {
                     var html = await res.text();
+                    var htmlUrl = URL.createObjectURL(new Blob([html], { type: contentType || 'text/html' }));
+                    frame.dataset.objectUrl = htmlUrl;
                     frame.srcdoc = html;
                     frame.hidden = false;
                     placeholder.hidden = true;
+                    openLink.href = htmlUrl;
+                    actions.hidden = false;
                 } else if (contentType.startsWith('text/') || contentType.includes('json') || contentType.includes('xml')) {
-                    text.textContent = await res.text();
+                    var textValue = await res.text();
+                    var textUrl = URL.createObjectURL(new Blob([textValue], { type: contentType || 'text/plain' }));
+                    text.dataset.objectUrl = textUrl;
+                    text.textContent = textValue;
                     text.hidden = false;
                     placeholder.hidden = true;
+                    openLink.href = textUrl;
+                    actions.hidden = false;
                 } else {
-                    placeholder.textContent = 'Attachment готов. Лучше открыть его отдельно.';
+                    var blob = await res.blob();
+                    var blobUrl = URL.createObjectURL(blob);
+                    panel.dataset.objectUrl = blobUrl;
+                    openLink.href = blobUrl;
+                    actions.hidden = false;
+                    placeholder.textContent = 'Attachment готов. Откройте его отдельно.';
                 }
 
                 panel.classList.remove('is-error');

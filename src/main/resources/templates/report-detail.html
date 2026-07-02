@@ -205,10 +205,32 @@
         <section class="tests-block pass-block" th:if="${!run.passedTestsList.isEmpty()}">
             <h2 class="block-title">✅ Успешно пройденные тесты</h2>
             <ul class="test-items">
-                <li th:each="t : ${run.passedTestsList}">
+                <li th:each="t : ${run.passedTestsList}"
+                    th:classappend="${allureConfigured and t.allureTestResultId != null} ? 'test-item-rich' : ''">
                     <span class="ti-icon" th:text="${t.icon}">✅</span>
-                    <a th:if="${t.url != null}" th:href="${t.url}" th:text="${t.name}" target="_blank">test</a>
-                    <span th:if="${t.url == null}" th:text="${t.name}">test</span>
+                    <DIV class="test-item-body">
+                        <a th:if="${t.url != null}" th:href="${t.url}" th:text="${t.name}" target="_blank">test</a>
+                        <span th:if="${t.url == null}" th:text="${t.name}">test</span>
+                        <DIV class="test-item-toolbar" th:if="${allureConfigured and t.allureTestResultId != null}">
+                            <button type="button"
+                                    class="btn-action js-attachment-toggle"
+                                    th:attr="data-allure-id=${t.allureTestResultId}"
+                                    aria-expanded="false">
+                                Attachment из Allure
+                            </button>
+                        </DIV>
+                        <DIV class="attachment-panel js-attachment-panel" hidden="hidden">
+                            <p class="attachment-placeholder">Загрузка attachment…</p>
+                            <div class="attachment-actions" hidden="hidden">
+                                <a class="btn-link btn-sm js-attachment-open" href="#" target="_blank" rel="noopener">Открыть отдельно</a>
+                            </div>
+                            <iframe class="attachment-frame js-attachment-frame"
+                                    title="Attachment из Allure TestOps"
+                                    sandbox="allow-same-origin"
+                                    hidden="hidden"></iframe>
+                            <pre class="raw-block attachment-text js-attachment-text" hidden="hidden"></pre>
+                        </DIV>
+                    </DIV>
                 </li>
             </ul>
         </section>
