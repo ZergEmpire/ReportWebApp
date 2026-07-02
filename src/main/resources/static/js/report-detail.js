@@ -231,7 +231,7 @@
             if (panel.dataset.loaded === 'true' && !panel.hidden) {
                 panel.hidden = true;
                 btn.setAttribute('aria-expanded', 'false');
-                btn.textContent = btn.dataset.labelDefault || 'Attachment из Allure';
+                btn.textContent = btn.dataset.labelDefault || 'Allure attachment';
                 return;
             }
 
@@ -307,7 +307,7 @@
 
                 panel.classList.remove('is-error');
                 panel.dataset.loaded = 'true';
-                btn.textContent = 'Скрыть attachment';
+                btn.textContent = 'Скрыть Allure attachment';
             } catch (e) {
                 panel.classList.add('is-error');
                 placeholder.hidden = false;
