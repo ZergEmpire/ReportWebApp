@@ -589,6 +589,10 @@ a:hover {
     margin-bottom: 0.75rem;
 }
 
+.attachment-panel [hidden] {
+    display: none !important;
+}
+
 .attachment-frame {
     display: block;
     width: 100%;
