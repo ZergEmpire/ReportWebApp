@@ -490,6 +490,7 @@ public class AllureResultsStorageService {
             view.setStepRows(flattenSteps(rich.steps()));
             view.setParameters(rich.parameters());
             view.setStatusMessage(rich.statusMessage() != null ? rich.statusMessage() : entity.getStatusMessage());
+            applyAnnotationFields(view, rich);
 
             List<AllureAttachmentRef> refs = new ArrayList<>(rich.attachments());
             collectStepAttachments(rich.steps(), refs);
@@ -514,6 +515,32 @@ public class AllureResultsStorageService {
             return 0;
         }
         return stop - start;
+    }
+
+    /** Аннотации allure (@Owner/@Severity/@Epic/@Feature/@Story/@Tags/@Description/@Link). */
+    private static void applyAnnotationFields(AllureTestPageView view,
+            com.appscreener.report.model.allure.AllureRichResult rich) {
+        Map<String, List<String>> labels = rich.labels();
+        view.setOwner(firstLabel(labels, "owner"));
+        view.setSeverity(firstLabel(labels, "severity"));
+        view.setEpic(firstLabel(labels, "epic"));
+        view.setFeature(firstLabel(labels, "feature"));
+        view.setStory(firstLabel(labels, "story"));
+        List<String> tags = new ArrayList<>();
+        tags.addAll(labels.getOrDefault("tag", List.of()));
+        tags.addAll(labels.getOrDefault("category", List.of()));
+        view.setTags(tags);
+        view.setDescription(rich.description());
+        view.setLinks(rich.links());
+    }
+
+    private static String firstLabel(Map<String, List<String>> labels, String name) {
+        List<String> values = labels.get(name);
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        String value = values.get(0);
+        return value == null || value.isBlank() ? null : value;
     }
 
     private static void collectStepAttachments(List<com.appscreener.report.model.allure.AllureStepNode> steps,

@@ -1404,3 +1404,128 @@ body.auth-screen {
     border: 1px solid rgba(255, 255, 255, 0.1);
     cursor: zoom-in;
 }
+
+/* ===== Allure annotations (@Owner/@Severity/@Epic/@Tags/@Link, параметры шагов) ===== */
+
+.severity-badge {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 1px solid transparent;
+    vertical-align: baseline;
+}
+
+.severity-blocker,
+.severity-critical {
+    color: #f0a0a0;
+    border-color: rgba(196, 92, 92, 0.6);
+    background: rgba(196, 92, 92, 0.15);
+}
+
+.severity-major {
+    color: var(--gold-light);
+    border-color: rgba(201, 162, 39, 0.55);
+    background: rgba(201, 162, 39, 0.12);
+}
+
+.severity-minor {
+    color: var(--text-muted);
+    border-color: rgba(154, 149, 136, 0.4);
+    background: rgba(154, 149, 136, 0.1);
+}
+
+.tag-chip {
+    display: inline-block;
+    margin-left: 0.3rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    color: #9fc3e8;
+    border: 1px solid rgba(120, 160, 210, 0.45);
+    background: rgba(120, 160, 210, 0.1);
+    vertical-align: baseline;
+}
+
+.epic-breadcrumb {
+    margin: 0.5rem 0 0;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+}
+
+.epic-breadcrumb > span {
+    color: var(--gold-light);
+}
+
+.epic-breadcrumb > span + span {
+    color: var(--text-muted);
+}
+
+.description-block {
+    white-space: pre-wrap;
+    color: var(--text);
+}
+
+.link-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.link-list li {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    font-size: 0.9rem;
+}
+
+.link-type {
+    flex-shrink: 0;
+    padding: 0.02rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #9fc3e8;
+    border: 1px solid rgba(120, 160, 210, 0.45);
+    background: rgba(120, 160, 210, 0.1);
+}
+
+.step-params {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.15rem 0.5rem 0.3rem 0.5rem;
+}
+
+.step-param {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    max-width: 480px;
+    padding: 0.05rem 0.4rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 0.76rem;
+    cursor: help;
+}
+
+.step-param code {
+    color: var(--gold-light);
+    flex-shrink: 0;
+    font-size: 0.76rem;
+}
+
+.step-param span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+}

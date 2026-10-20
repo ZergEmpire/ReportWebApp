@@ -1,6 +1,7 @@
 package com.appscreener.report.service;
 
 import com.appscreener.report.model.allure.AllureAttachmentRef;
+import com.appscreener.report.model.allure.AllureLink;
 import com.appscreener.report.model.allure.AllureParam;
 import com.appscreener.report.model.allure.AllureParsedResult;
 import com.appscreener.report.model.allure.AllureParsedRun;
@@ -104,12 +105,28 @@ public class AllureResultsParser {
                 statusDetails.path("muted").asBoolean(false),
                 text(statusDetails, "message"),
                 text(statusDetails, "trace"),
+                text(root, "description"),
                 root.hasNonNull("start") ? root.get("start").asLong() : null,
                 root.hasNonNull("stop") ? root.get("stop").asLong() : null,
                 readLabels(root),
+                readLinks(root.path("links")),
                 readSteps(root.path("steps")),
                 readAttachmentRefs(root.path("attachments")),
                 readParams(root.path("parameters")));
+    }
+
+    private List<AllureLink> readLinks(JsonNode node) {
+        List<AllureLink> links = new ArrayList<>();
+        if (node != null && node.isArray()) {
+            for (JsonNode link : node) {
+                String url = text(link, "url");
+                if (url == null || url.isBlank()) {
+                    continue;
+                }
+                links.add(new AllureLink(text(link, "name"), url, text(link, "type")));
+            }
+        }
+        return links;
     }
 
     /** Список файлов-аттачей каталога: source (имя файла) → путь. */
