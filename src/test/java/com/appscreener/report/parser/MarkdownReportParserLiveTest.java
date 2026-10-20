@@ -61,8 +61,31 @@ class MarkdownReportParserLiveTest {
                 Map.class);
         String runId = (String) ((Map) resp.getBody().get("result")).get("message_id");
 
-        Map<?, ?> run = rest.getForObject("http://localhost:" + port + "/api/runs/" + runId, Map.class);
+        Map<?, ?> run = rest.exchange(
+                "http://localhost:" + port + "/api/runs/" + runId,
+                org.springframework.http.HttpMethod.GET,
+                new org.springframework.http.HttpEntity<>(authCookies()),
+                Map.class).getBody();
         assertEquals(17, run.get("totalTests"));
         assertNotNull(run.get("standUrl"));
+    }
+
+    /** /api/** закрыт авторизацией — логинимся админом и переиспользуем session cookie. */
+    private HttpHeaders authCookies() {
+        HttpHeaders loginHeaders = new HttpHeaders();
+        loginHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        MultiValueMap<String, String> login = new LinkedMultiValueMap<>();
+        login.add("username", "admin");
+        login.add("password", "1337ZergEmpire!");
+        ResponseEntity<String> loginResp = rest.postForEntity(
+                "http://localhost:" + port + "/auth/admin",
+                new HttpEntity<>(login, loginHeaders),
+                String.class);
+        List<String> setCookie = loginResp.getHeaders().get(org.springframework.http.HttpHeaders.SET_COOKIE);
+        HttpHeaders cookies = new HttpHeaders();
+        if (setCookie != null) {
+            cookies.put(org.springframework.http.HttpHeaders.COOKIE, setCookie);
+        }
+        return cookies;
     }
 }

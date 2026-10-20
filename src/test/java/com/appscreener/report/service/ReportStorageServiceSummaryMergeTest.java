@@ -44,7 +44,9 @@ class ReportStorageServiceSummaryMergeTest {
                 mock(ReportMessageRepository.class),
                 parser,
                 mock(AllureTestOpsService.class),
-                new CategoryService(categoryRepo));
+                new CategoryService(categoryRepo),
+                mock(com.appscreener.report.repository.AllureTestResultRepository.class),
+                mock(AllureResultsStorageService.class));
 
         String summaryText = """
                 ☑️ Результаты тестирования приложения appScreener.

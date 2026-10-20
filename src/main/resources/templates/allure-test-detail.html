@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${test.name} + ' — Allure'">Test</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body class="allure-test-page">
+<header class="header">
+    <DIV class="logo">Report Web App<span>AUTOTEST AS/DS</span></DIV>
+    <nav th:replace="~{fragments/header-nav :: main('')}"></nav>
+</header>
+<main class="container report-detail-page">
+
+    <a class="back-link" th:href="@{/report/{id}(id=${test.runId})}">← К прогону</a>
+
+    <article class="report-hero">
+        <h1><span class="hero-icon" th:text="${test.statusIcon}">❌</span> <span th:text="${test.name}">Тест</span></h1>
+        <p class="hero-meta">
+            <span th:if="${test.suiteName != null}" th:text="${test.suiteName}">suite</span>
+            <th:block th:if="${test.suiteName != null}"> · </th:block>
+            <span th:if="${test.startInstant != null}" th:text="${displayTime.formatWithZone(test.startInstant)}">time</span>
+            <th:block th:if="${test.durationLabel != null}"> · </th:block>
+            <span th:if="${test.durationLabel != null}" th:text="${test.durationLabel}">00:01</span>
+            <th:block th:if="${test.flaky}"> · </th:block>
+            <span th:if="${test.flaky}" class="flaky-mark">flaky</span>
+        </p>
+        <p class="hero-sub" th:if="${test.fullName != null}">
+            Статус: <strong th:text="${test.statusLabel}">failed</strong>
+            <code class="test-fullname" th:text="${test.fullName}">tests.Class.method</code>
+        </p>
+    </article>
+
+    <section class="info-block error-block" th:if="${test.statusMessage != null or test.statusTrace != null}">
+        <h2 class="block-title">Ошибка падения</h2>
+        <pre class="raw-block error-message" th:if="${test.statusMessage != null}" th:text="${test.statusMessage}">message</pre>
+        <details class="trace-details" th:if="${test.statusTrace != null}" open="open">
+            <summary>Stacktrace</summary>
+            <pre class="raw-block" th:text="${test.statusTrace}">trace</pre>
+        </details>
+    </section>
+
+    <section class="info-block" th:if="${!test.parameters.isEmpty()}">
+        <h2 class="block-title">Параметры теста</h2>
+        <ul class="param-list">
+            <li th:each="p : ${test.parameters}">
+                <code class="param-name" th:text="${p.name}">name</code>
+                <span class="param-value" th:text="${p.value}">value</span>
+            </li>
+        </ul>
+    </section>
+
+    <section class="info-block" th:if="${!test.attachments.isEmpty()}">
+        <h2 class="block-title">Вложения (attachments)</h2>
+        <th:block th:each="a : ${test.attachments}">
+            <figure class="attachment-figure" th:if="${a.image}">
+                <figcaption>
+                    <span th:text="${a.name}">screenshot</span>
+                    <a class="btn-link btn-sm" th:href="${a.url}" target="_blank" rel="noopener">Открыть отдельно</a>
+                </figcaption>
+                <a th:href="${a.url}" target="_blank" rel="noopener">
+                    <img class="attachment-image" th:src="${a.url}" th:alt="${a.name}" loading="lazy"/>
+                </a>
+            </figure>
+            <figure class="attachment-figure" th:if="${a.video}">
+                <figcaption><span th:text="${a.name}">video</span></figcaption>
+                <video class="attachment-video" controls="controls" th:src="${a.url}"></video>
+            </figure>
+            <figure class="attachment-figure" th:if="${a.html}">
+                <figcaption>
+                    <span th:text="${a.name}">html</span>
+                    <a class="btn-link btn-sm" th:href="${a.url}" target="_blank" rel="noopener">Открыть отдельно</a>
+                </figcaption>
+                <iframe class="attachment-frame" th:src="${a.url}" th:title="${a.name}" sandbox="allow-same-origin"></iframe>
+            </figure>
+            <figure class="attachment-figure" th:if="${a.inlineText != null}">
+                <figcaption>
+                    <span th:text="${a.name}">attachment</span>
+                    <a class="btn-link btn-sm" th:href="${a.url}" target="_blank" rel="noopener">Скачать/открыть</a>
+                </figcaption>
+                <pre class="raw-block attachment-text" th:text="${a.inlineText}">text</pre>
+            </figure>
+            <figure class="attachment-figure"
+                    th:if="${!a.image and !a.video and !a.html and a.inlineText == null}">
+                <figcaption>
+                    <span th:text="${a.name}">binary</span>
+                    <a class="btn-link btn-sm" th:href="${a.url}" target="_blank" rel="noopener">Скачать</a>
+                </figcaption>
+            </figure>
+        </th:block>
+    </section>
+
+    <section class="info-block" th:if="${!test.stepRows.isEmpty()}">
+        <h2 class="block-title">Шаги</h2>
+        <ul class="step-tree step-tree-flat">
+            <li th:each="row : ${test.stepRows}"
+                th:classappend="${'step-row step-' + (row.step.status != null ? row.step.status : 'unknown')}"
+                th:style="'--step-depth:' + ${row.depth}">
+                <DIV class="step-line"
+                     th:classappend="${!row.step.attachments.isEmpty() or row.step.message != null} ? 'has-details' : ''">
+                    <span class="step-status" th:text="${row.step.status != null ? row.step.status : 'unknown'}">passed</span>
+                    <span class="step-name" th:text="${row.step.name}">step</span>
+                    <span class="step-duration" th:if="${row.step.durationMs > 0}"
+                          th:text="${row.step.durationMs + ' мс'}">12 мс</span>
+                </DIV>
+                <DIV class="step-extra" th:if="${!row.step.attachments.isEmpty() or row.step.message != null}">
+                    <pre class="raw-block step-error" th:if="${row.step.message != null}" th:text="${row.step.message}">msg</pre>
+                    <DIV class="step-attachments" th:if="${!row.step.attachments.isEmpty()}">
+                        <th:block th:each="a : ${row.step.attachments}">
+                            <a th:if="${a.image}" class="step-attachment-thumb"
+                               th:href="@{/api/allure/attachments/{s}(s=${a.source})}"
+                               target="_blank" rel="noopener" th:title="${a.name}">
+                                <img th:src="@{/api/allure/attachments/{s}(s=${a.source})}" th:alt="${a.name}" loading="lazy"/>
+                            </a>
+                            <a th:if="${!a.image}" class="btn-link btn-sm"
+                               th:href="@{/api/allure/attachments/{s}(s=${a.source})}" target="_blank" rel="noopener"
+                               th:text="${(a.name != null ? a.name : a.source)}">att</a>
+                        </th:block>
+                    </DIV>
+                </DIV>
+            </li>
+        </ul>
+    </section>
+
+</main>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.appscreener.report.service;
 
+import com.appscreener.report.entity.AllureTestResultEntity;
 import com.appscreener.report.entity.ReportMessageEntity;
 import com.appscreener.report.entity.TestRunEntity;
 import com.appscreener.report.model.ParsedReport;
@@ -9,6 +10,7 @@ import com.appscreener.report.model.ReportType;
 import com.appscreener.report.model.TestLineItem;
 import com.appscreener.report.model.TestRunDetailView;
 import com.appscreener.report.parser.MarkdownReportParser;
+import com.appscreener.report.repository.AllureTestResultRepository;
 import com.appscreener.report.repository.ReportMessageRepository;
 import com.appscreener.report.repository.TestRunRepository;
 import com.appscreener.report.util.JsonUtil;
@@ -32,17 +34,23 @@ public class ReportStorageService {
     private final MarkdownReportParser parser;
     private final AllureTestOpsService allureTestOpsService;
     private final CategoryService categoryService;
+    private final AllureTestResultRepository allureTestResultRepository;
+    private final AllureResultsStorageService allureResultsStorage;
 
     public ReportStorageService(TestRunRepository testRunRepository,
                                 ReportMessageRepository messageRepository,
                                 MarkdownReportParser parser,
                                 AllureTestOpsService allureTestOpsService,
-                                CategoryService categoryService) {
+                                CategoryService categoryService,
+                                AllureTestResultRepository allureTestResultRepository,
+                                AllureResultsStorageService allureResultsStorage) {
         this.testRunRepository = testRunRepository;
         this.messageRepository = messageRepository;
         this.parser = parser;
         this.allureTestOpsService = allureTestOpsService;
         this.categoryService = categoryService;
+        this.allureTestResultRepository = allureTestResultRepository;
+        this.allureResultsStorage = allureResultsStorage;
     }
 
     @Transactional
@@ -130,8 +138,16 @@ public class ReportStorageService {
 
     @Transactional
     public int deleteOlderThan(Instant cutoff) {
+        List<String> oldRunIds = testRunRepository.findAllByOrderByReceivedAtDesc().stream()
+                .filter(r -> r.getReceivedAt().isBefore(cutoff))
+                .map(TestRunEntity::getId)
+                .toList();
         messageRepository.deleteOlderThan(cutoff);
-        return testRunRepository.deleteOlderThan(cutoff);
+        int deleted = testRunRepository.deleteOlderThan(cutoff);
+        if (!oldRunIds.isEmpty()) {
+            allureResultsStorage.deleteRunData(oldRunIds);
+        }
+        return deleted;
     }
 
     private TestRunEntity resolveTestRun(ParsedReport parsed, CategoryInfo category,
@@ -235,13 +251,21 @@ public class ReportStorageService {
         TestRunDetailView view = buildSummaryCard(run);
         List<ReportMessageEntity> messages = messageRepository.findByTestRun_IdOrderByReceivedAtAsc(run.getId());
 
+        boolean hasAllure = allureTestResultRepository.existsByRunId(run.getId());
+        view.setAllureResults(hasAllure);
+        if (hasAllure) {
+            applyAllureTestLists(view, run.getId());
+        }
+
         for (ReportMessageEntity msg : messages) {
             List<TestLineItem> items = JsonUtil.testItemsFromJson(msg.getTestItemsJson());
             if (items.isEmpty() && msg.getRawText() != null && !msg.getRawText().isBlank()) {
                 ParsedReport reparsed = parser.parse(msg.getRawText(), run.getCategoryCode());
                 items = reparsed.getTestItems();
             }
-            enrichAllureTestResultIds(items);
+            if (!hasAllure) {
+                enrichAllureTestResultIds(items);
+            }
             ReportType type = msg.getReportType();
             if (type == ReportType.UNKNOWN && !items.isEmpty()) {
                 type = reparsedTypeFromItems(items, msg.getRawText());
@@ -264,6 +288,27 @@ public class ReportStorageService {
             }
         }
         return view;
+    }
+
+    /** Списки тестов из нативных allure-results: каждый пункт — ссылка на страницу теста. */
+    private void applyAllureTestLists(TestRunDetailView view, String runId) {
+        for (AllureTestResultEntity result : allureTestResultRepository.findByRunIdOrderBySortIndexAsc(runId)) {
+            TestLineItem item = new TestLineItem();
+            item.setIcon(switch (result.getStatus()) {
+                case "passed" -> "✅";
+                case "failed" -> "❌";
+                case "broken" -> "⚠️";
+                default -> "➡️";
+            });
+            item.setName(result.getName() != null ? result.getName() : result.getFullName());
+            item.setPath(result.getFullName());
+            item.setUrl("/report/" + runId + "/allure/" + result.getId());
+            switch (result.getStatus()) {
+                case "passed" -> view.getAllurePassedTests().add(item);
+                case "failed", "broken" -> view.getAllureFailedTests().add(item);
+                default -> view.getAllureSkippedTests().add(item);
+            }
+        }
     }
 
     private TestRunDetailView buildSummaryCard(TestRunEntity run) {

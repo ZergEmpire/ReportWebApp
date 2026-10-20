@@ -32,6 +32,43 @@ public class TestRunDetailView {
     private List<TestLineItem> successfulSuites = new ArrayList<>();
     private List<TestLineItem> failedSuites = new ArrayList<>();
     private List<TestLineItem> notificationItems = new ArrayList<>();
+    /** Прогон импортирован из allure-results: списки тестов строятся из нативных данных. */
+    private boolean allureResults;
+    private List<TestLineItem> allureFailedTests = new ArrayList<>();
+    private List<TestLineItem> allurePassedTests = new ArrayList<>();
+    private List<TestLineItem> allureSkippedTests = new ArrayList<>();
+
+    public boolean isAllureResults() {
+        return allureResults;
+    }
+
+    public void setAllureResults(boolean allureResults) {
+        this.allureResults = allureResults;
+    }
+
+    public List<TestLineItem> getAllureFailedTests() {
+        return allureFailedTests;
+    }
+
+    public void setAllureFailedTests(List<TestLineItem> allureFailedTests) {
+        this.allureFailedTests = allureFailedTests;
+    }
+
+    public List<TestLineItem> getAllurePassedTests() {
+        return allurePassedTests;
+    }
+
+    public void setAllurePassedTests(List<TestLineItem> allurePassedTests) {
+        this.allurePassedTests = allurePassedTests;
+    }
+
+    public List<TestLineItem> getAllureSkippedTests() {
+        return allureSkippedTests;
+    }
+
+    public void setAllureSkippedTests(List<TestLineItem> allureSkippedTests) {
+        this.allureSkippedTests = allureSkippedTests;
+    }
 
     public boolean isDailySummary() {
         return reportType == ReportType.DAILY_SUMMARY;
