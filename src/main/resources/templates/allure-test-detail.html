@@ -107,7 +107,9 @@
                     <span th:text="${a.name}">attachment</span>
                     <a class="btn-link btn-sm" th:href="${a.url}" target="_blank" rel="noopener">Скачать/открыть</a>
                 </figcaption>
-                <pre class="raw-block attachment-text" th:text="${a.inlineText}">text</pre>
+                <pre class="raw-block attachment-text js-markdown-text"
+                     th:attr="data-attachment-name=${a.name}, data-attachment-type=${a.contentType}"
+                     th:text="${a.inlineText}">text</pre>
             </figure>
             <figure class="attachment-figure"
                     th:if="${!a.image and !a.video and !a.html and a.inlineText == null}">
@@ -158,5 +160,6 @@
     </section>
 
 </main>
+<script th:src="@{/js/attachment-markdown.js}" defer></script>
 </body>
 </html>

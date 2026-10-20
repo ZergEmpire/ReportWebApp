@@ -13,7 +13,8 @@ Allure TestOps периодически нестабилен, а данные п
 - считает сводку прогона (passed / failed+broken / skipped, длительность, сюиты);
 - строит списки тестов с ссылками на страницу каждого теста;
 - на странице теста показывает: дерево шагов с параметрами, message/stacktrace падения,
-  скриншоты (png), текстовые/markdown/json/html/video аттачи;
+  скриншоты (png), текстовые/markdown/json/html/video аттачи (markdown-таблицы
+  рендерятся в HTML, как в старом TestOps-флоу);
 - **аннотации allure**: `@Owner` (👤 в шапке), `@Severity` (цветной бейдж),
   `@Epic › @Feature › @Story` (хлебная крошка раздела), `@Tags` (чипы),
   `@Description` (блок описания), `@Link`/`@Issue`/`@TmsLink` (ссылки с типом),

@@ -1529,3 +1529,63 @@ body.auth-screen {
     white-space: nowrap;
     color: var(--text-muted);
 }
+
+/* ===== Отрендеренный markdown-аттач на странице allure-теста ===== */
+
+.md-rendered {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    overflow-x: auto;
+}
+
+.md-rendered h1,
+.md-rendered h2,
+.md-rendered h3,
+.md-rendered h4,
+.md-rendered h5,
+.md-rendered h6 {
+    color: var(--gold-light);
+    margin: 0.75rem 0 0.4rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.md-rendered h1 { font-size: 1.25rem; }
+.md-rendered h2 { font-size: 1.15rem; }
+.md-rendered h3 { font-size: 1.05rem; }
+
+.md-rendered p {
+    margin: 0.35rem 0 0.6rem;
+}
+
+.md-rendered a {
+    word-break: break-all;
+}
+
+.md-rendered table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    display: block;
+    overflow: auto;
+    max-width: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+}
+
+.md-rendered th,
+.md-rendered td {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 7px 10px;
+    vertical-align: top;
+    text-align: left;
+    white-space: pre-wrap;
+}
+
+.md-rendered th {
+    background: rgba(201, 162, 39, 0.12);
+    color: var(--gold-light);
+    position: sticky;
+    top: 0;
+}
