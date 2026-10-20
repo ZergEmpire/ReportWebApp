@@ -13,7 +13,10 @@
 </header>
 <main class="container report-detail-page">
 
-    <a class="back-link" th:href="@{/report/{id}(id=${test.runId})}">← К прогону</a>
+    <div class="test-page-toolbar">
+        <a class="back-link" th:href="@{/report/{id}(id=${test.runId})}">← К прогону</a>
+        <a class="btn-link" th:href="@{/report/{runId}/allure/{resultId}/export.md(runId=${test.runId},resultId=${test.resultId})}">⬇ Выгрузить .md по тесту</a>
+    </div>
 
     <article class="report-hero">
         <h1><span class="hero-icon" th:text="${test.statusIcon}">❌</span> <span th:text="${test.name}">Тест</span></h1>
