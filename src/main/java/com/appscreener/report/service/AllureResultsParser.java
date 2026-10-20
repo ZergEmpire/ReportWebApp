@@ -40,6 +40,15 @@ public class AllureResultsParser {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    public AllureResultsParser() {
+        // allure-results могут содержать гигантские строковые значения (тело ответа в параметре шага);
+        // дефолтный лимит Jackson 2.15+ (20 млн символов) на них падает
+        objectMapper.getFactory().setStreamReadConstraints(
+                com.fasterxml.jackson.core.StreamReadConstraints.builder()
+                        .maxStringLength(50_000_000)
+                        .build());
+    }
+
     /** Разбор каталога: сводка прогона + упрощённые результаты (без дерева шагов). */
     public AllureParsedRun parseDirectory(Path resultsDir) throws IOException {
         List<Path> resultFiles = new ArrayList<>();

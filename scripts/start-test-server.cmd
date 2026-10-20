@@ -15,9 +15,9 @@ if not exist "%JAR%" (
 
 rem Java 21: JAVA_HOME, иначе известный локальный JDK
 set JAVA_BIN=java
-if defined JAVA_HOME set JAVA_BIN=%JAVA_HOME%\bin\java
-if not exist "%JAVA_BIN%" set JAVA_BIN=C:\Users\Sergej\.jdks\temurin-21.0.11\bin\java
+if defined JAVA_HOME set JAVA_BIN=%JAVA_HOME%\bin\java.exe
+if not exist "%JAVA_BIN%" set JAVA_BIN=C:\Users\Sergej\.jdks\temurin-21.0.11\bin\java.exe
 
 echo Стартую тестовый сервер на http://localhost:8080 (лог: test-server\app.log) ...
-start "report-web-app-test" /min "%JAVA_BIN%" -jar "%JAR%" --spring.config.additional-location=file:./test-server/application.properties > test-server\app.log 2>&1
+powershell -NoProfile -Command "Start-Process -FilePath '%JAVA_BIN%' -ArgumentList '-jar','%JAR%','--spring.config.additional-location=file:./test-server/application.properties' -WorkingDirectory '%CD%' -WindowStyle Hidden -RedirectStandardOutput 'test-server\app.log' -RedirectStandardError 'test-server\app-err.log'"
 echo Останов: scripts\stop-test-server.cmd

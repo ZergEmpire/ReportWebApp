@@ -289,6 +289,59 @@ class AllureResultsStorageServiceTest {
     }
 
     @Test
+    void importToleratesResultWithHugeStringValue() throws Exception {
+        // реальный кейс: параметр шага содержит >20 млн символов (тело ответа) —
+        // дефолтные StreamReadConstraints Jackson на этом падают
+        Path dir = java.nio.file.Files.createTempDirectory("allure-huge");
+        try {
+            StringBuilder huge = new StringBuilder(21_000_100);
+            java.util.Random random = new java.util.Random(1);
+            while (huge.length() < 21_000_000) {
+                huge.append(Long.toBinaryString(random.nextLong()));
+            }
+            String json = "{\"uuid\":\"huge00000-0000-0000-0000-000000000001\","
+                    + "\"fullName\":\"tests.big.HugeParamTest.run\",\"name\":\"Тест с гигантским параметром\","
+                    + "\"status\":\"passed\",\"statusDetails\":{},\"stage\":\"finished\","
+                    + "\"steps\":[{\"name\":\"шаг\",\"status\":\"passed\",\"stage\":\"finished\",\"steps\":[],"
+                    + "\"attachments\":[],\"parameters\":[{\"name\":\"response\",\"value\":\"" + huge + "\"}],"
+                    + "\"start\":1792481587000,\"stop\":1792481588000}],"
+                    + "\"attachments\":[],\"parameters\":[],\"start\":1792481587000,\"stop\":1792481589000}";
+            java.nio.file.Files.writeString(dir.resolve("huge00000-0000-0000-0000-000000000001-result.json"), json);
+
+            AllureResultsStorageService.ImportOutcome outcome = storage.importZip(
+                    zipOfDir(dir), null, "2", AllureResultsStorageService.RunMeta.empty());
+
+            assertEquals(1, outcome.parsed().results().size());
+            var page = storage.buildTestPage(outcome.run().getId(),
+                    "huge00000-0000-0000-0000-000000000001").orElseThrow();
+            assertEquals(1, page.getStepRows().size());
+            assertTrue(page.getStepRows().get(0).step().parameters().get(0).value().length() >= 21_000_000,
+                    "гигантский параметр должен пройти насквозь");
+        } finally {
+            deleteRecursive(dir);
+        }
+    }
+
+    private static ByteArrayInputStream zipOfDir(Path dir) throws IOException {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(buf);
+             var files = Files.list(dir)) {
+            for (Path file : files.sorted().toList()) {
+                zip.putNextEntry(new ZipEntry(file.getFileName().toString()));
+                java.nio.file.Files.copy(file, zip);
+                zip.closeEntry();
+            }
+        }
+        return new ByteArrayInputStream(buf.toByteArray());
+    }
+
+    private static void deleteRecursive(Path path) throws IOException {
+        try (var walk = Files.walk(path)) {
+            walk.sorted(java.util.Comparator.reverseOrder()).forEach(p -> p.toFile().delete());
+        }
+    }
+
+    @Test
     void zipWithSuspiciousPathIsRejected() throws Exception {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(buf)) {
