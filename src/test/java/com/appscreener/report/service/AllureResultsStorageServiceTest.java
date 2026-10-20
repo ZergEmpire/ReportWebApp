@@ -24,6 +24,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -51,7 +52,7 @@ class AllureResultsStorageServiceTest {
     private AllureTestResultRepository testResultRepository;
 
     @Test
-    void importZipCreatesRunWithSummaryAndFiles() throws Exception {
+    void importZipCreatesRunWithSummaryAndCompactStorage() throws Exception {
         AllureResultsStorageService.ImportOutcome outcome = storage.importZip(
                 sampleZip(false), null, "2",
                 new AllureResultsStorageService.RunMeta(
@@ -71,11 +72,19 @@ class AllureResultsStorageServiceTest {
         assertNotNull(run.getExecutionTime());
         assertTrue(run.getSuiteNamesJson().contains("Сюита примеров"));
 
-        assertEquals(3, testResultRepository.findByRunIdOrderBySortIndexAsc(run.getId()).size());
+        var results = testResultRepository.findByRunIdOrderBySortIndexAsc(run.getId());
+        assertEquals(3, results.size());
+        // полный JSON каждого теста хранится сжатым в БД
+        results.forEach(r -> {
+            assertNotNull(r.getResultJsonGz());
+            assertTrue(r.getResultJsonGz().length > 0);
+        });
 
-        Path runDir = storage.runDirectory(run.getId());
-        assertEquals(4, Files.list(runDir.resolve("results")).count());
-        assertEquals(3, Files.list(runDir.resolve("attachments")).count());
+        // аттачи — одним pak-файлом; loose-каталогов нет
+        Path pack = storage.attachmentPackPath(run.getId());
+        assertTrue(Files.exists(pack));
+        assertEquals(3, packEntries(pack).size());
+        assertFalse(Files.exists(storage.runDirectory(run.getId())));
     }
 
     @Test
@@ -135,7 +144,7 @@ class AllureResultsStorageServiceTest {
     }
 
     @Test
-    void testPageContainsStepsAttachmentsAndInlineText() throws Exception {
+    void testPageIsReproducibleFromDbAlone() throws Exception {
         AllureResultsStorageService.ImportOutcome outcome = storage.importZip(
                 sampleZip(false), null, "2", AllureResultsStorageService.RunMeta.empty());
         String runId = outcome.run().getId();
@@ -160,22 +169,33 @@ class AllureResultsStorageServiceTest {
         assertTrue(passed.getAttachments().get(0).isInlineText());
         assertTrue(passed.getAttachments().get(0).getInlineText().contains("SignalR-2.4.3"));
 
+        // шаги восстанавливаются из БД даже без пака аттачей на диске
+        Files.delete(storage.attachmentPackPath(runId));
+        AllureTestPageView failedFromDb = storage.buildTestPage(runId, "22222222-2222-2222-2222-222222222222")
+                .orElseThrow();
+        assertEquals(1, failedFromDb.getStepRows().size());
+        assertTrue(failedFromDb.getStatusTrace().contains("com.codeborne.selenide.ex.ElementShould"));
+        // метаданные аттача в БД, но содержимое уже не отдаётся
+        assertEquals(1, failedFromDb.getAttachments().size());
+        assertTrue(failedFromDb.getAttachments().get(0).getInlineText() == null
+                || failedFromDb.getAttachments().get(0).getInlineText().isEmpty());
+
         assertTrue(storage.buildTestPage(runId, "missing").isEmpty());
         assertTrue(storage.buildTestPage("missrun", "11111111-1111-1111-1111-111111111111").isEmpty());
     }
 
     @Test
-    void deleteRunDataRemovesEntitiesAndFiles() throws Exception {
+    void deleteRunDataRemovesEntitiesAndPack() throws Exception {
         AllureResultsStorageService.ImportOutcome outcome = storage.importZip(
                 sampleZip(false), null, "2", AllureResultsStorageService.RunMeta.empty());
         String runId = outcome.run().getId();
-        Path runDir = storage.runDirectory(runId);
-        assertTrue(Files.exists(runDir));
+        Path pack = storage.attachmentPackPath(runId);
+        assertTrue(Files.exists(pack));
 
         storage.deleteRunData(List.of(runId));
 
         assertTrue(testResultRepository.findByRunIdOrderBySortIndexAsc(runId).isEmpty());
-        assertFalse(Files.exists(runDir));
+        assertFalse(Files.exists(pack));
     }
 
     /** Zip фикстуры: flat или с корневой папкой allure-results/. */
@@ -204,19 +224,29 @@ class AllureResultsStorageServiceTest {
     }
 
     @Test
-    void readsAttachmentContentFromDisk() throws Exception {
+    void attachmentStreamedFromPackIntact() throws Exception {
         AllureResultsStorageService.ImportOutcome outcome = storage.importZip(
                 sampleZip(false), null, "2", AllureResultsStorageService.RunMeta.empty());
 
         var attachment = storage.findAttachment(
                 "bbbbbbbb-0000-0000-0000-000000000000-attachment.png").orElseThrow();
-        byte[] content = storage.readAttachmentContent(attachment);
-        assertTrue(content.length > 0);
-        // PNG signature
-        assertEquals((byte) 0x89, content[0]);
         // имя и тип — из JSON-рефа, а не из имени файла
         assertEquals("Тег не найден в модалке: pw403324u", attachment.getName());
         assertEquals("image/png", attachment.getContentType());
+
+        Path original = Paths.get(AllureResultsStorageServiceTest.class
+                .getResource("/allure-results-sample/bbbbbbbb-0000-0000-0000-000000000000-attachment.png").toURI());
+        var handle = storage.openAttachmentStream(attachment).orElseThrow();
+        ByteArrayOutputStream read = new ByteArrayOutputStream();
+        byte[] chunk = new byte[8192];
+        int n;
+        try (handle) {
+            assertEquals(Files.size(original), handle.size());
+            while ((n = handle.stream().read(chunk)) != -1) {
+                read.write(chunk, 0, n);
+            }
+        }
+        assertArrayEquals(Files.readAllBytes(original), read.toByteArray());
 
         var md = storage.findAttachment(
                 "aaaaaaaa-0000-0000-0000-000000000000-attachment.md").orElseThrow();
@@ -224,6 +254,18 @@ class AllureResultsStorageServiceTest {
         assertEquals("text/markdown", md.getContentType());
 
         assertTrue(storage.findAttachment("no-such-attachment").isEmpty());
+    }
+
+    @Test
+    void missingPackYieldsEmptyStream() throws Exception {
+        AllureResultsStorageService.ImportOutcome outcome = storage.importZip(
+                sampleZip(false), null, "2", AllureResultsStorageService.RunMeta.empty());
+        String runId = outcome.run().getId();
+        var attachment = storage.findAttachment(
+                "bbbbbbbb-0000-0000-0000-000000000000-attachment.png").orElseThrow();
+
+        Files.delete(storage.attachmentPackPath(runId));
+        assertTrue(storage.openAttachmentStream(attachment).isEmpty());
     }
 
     @Test
@@ -240,15 +282,23 @@ class AllureResultsStorageServiceTest {
             zip.putNextEntry(new ZipEntry("../../evil.txt"));
             zip.write("evil".getBytes());
         }
-        try (ZipInputStream ignored = new ZipInputStream(new ByteArrayInputStream(buf.toByteArray()))) {
-            // сам вызов ниже должен упасть на safeTarget
-        }
         try {
             storage.importZip(new ByteArrayInputStream(buf.toByteArray()), null, null,
                     AllureResultsStorageService.RunMeta.empty());
             throw new AssertionError("Ожидался IllegalArgumentException");
         } catch (IllegalArgumentException | IOException e) {
             // zip-slip отсечён: либо IllegalArgumentException от safeTarget, либо пустой каталог → нет result-файлов
+        }
+    }
+
+    private static List<String> packEntries(Path pack) throws IOException {
+        try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(pack))) {
+            List<String> names = new java.util.ArrayList<>();
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                names.add(entry.getName());
+            }
+            return names;
         }
     }
 }

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -76,7 +77,22 @@ public class AllureResultsParser {
 
     /** Полный разбор одного {@code *-result.json} (для страницы теста). */
     public AllureRichResult parseFullResult(Path resultFile) throws IOException {
-        JsonNode root = objectMapper.readTree(resultFile.toFile());
+        try (InputStream in = Files.newInputStream(resultFile)) {
+            return parseFullResult(in);
+        }
+    }
+
+    /** Полный разбор из сжатых (gzip) байтов, хранящихся в БД. */
+    public AllureRichResult parseFullResultGz(byte[] resultJsonGz) throws IOException {
+        try (InputStream in = new java.util.zip.GZIPInputStream(
+                new java.io.ByteArrayInputStream(resultJsonGz))) {
+            return parseFullResult(in);
+        }
+    }
+
+    /** Полный разбор из потока JSON (не закрывает поток). */
+    public AllureRichResult parseFullResult(InputStream in) throws IOException {
+        JsonNode root = objectMapper.readTree(in);
         JsonNode statusDetails = root.path("statusDetails");
         return new AllureRichResult(
                 text(root, "uuid"),

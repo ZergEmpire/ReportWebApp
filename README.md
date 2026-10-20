@@ -475,9 +475,14 @@ Report Web App умеет сам читать формат Allure (`*-result.jso
 и страницу каждого теста (дерево шагов, message/stacktrace, скриншоты и аттачи).
 Подробный контракт и инструкция для автотестов: [docs/allure-results-native.md](docs/allure-results-native.md).
 
-Хранение: raw JSON и аттачи — `data/allure/{runId}/` (свойство
-`report.allure-results.storage-dir`), в БД — индексные записи; retention чистит вместе
-с прогонами.
+Хранение (компактное, без переполнения памяти):
+
+- загруженный архив распаковывается во временный каталог на диске и удаляется после импорта;
+- полный JSON результата теста хранится сжатым (gzip) в БД (`allure_test_results.result_json_gz`)
+  — страница теста воспроизводится только из БД;
+- аттачи — одним deflate-паком `data/allure/{runId}-attachments.zip` (свойство
+  `report.allure-results.storage-dir`), отдаются стримингом (файл не грузится в память);
+- retention чистит БД-записи и пак вместе с прогонами.
 
 ---
 

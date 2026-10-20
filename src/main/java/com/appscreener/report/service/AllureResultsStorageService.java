@@ -14,17 +14,21 @@ import com.appscreener.report.repository.AllureAttachmentRepository;
 import com.appscreener.report.repository.AllureTestResultRepository;
 import com.appscreener.report.repository.TestRunRepository;
 import com.appscreener.report.util.JsonUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -32,12 +36,24 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
- * Импорт каталога allure-results в прогон: парсинг, копирование raw-файлов/аттачей на диск,
- * запись индексных записей и сводки в {@link TestRunEntity}.
+ * Импорт каталога allure-results в прогон.
+ * <p>
+ * Компактное хранение, не переполняющее память:
+ * <ul>
+ *   <li>архив распаковывается во временный каталог на диске (не в heap);</li>
+ *   <li>полный JSON результата теста хранится сжатым (gzip) в БД — страница теста
+ *       воспроизводится только из БД, попадает в бэкапы БД;</li>
+ *   <li>аттачи (скриншоты/тексты/видео) складываются в один deflate-пак на прогон
+ *       {@code data/allure/{runId}-attachments.zip} и отдаются стримингом, без загрузки
+ *       файла целиком в память.</li>
+ * </ul>
  */
 @Service
 public class AllureResultsStorageService {
@@ -48,11 +64,17 @@ public class AllureResultsStorageService {
     private static final long MAX_ZIP_TOTAL_BYTES = 2L * 1024 * 1024 * 1024;
     private static final long MAX_ZIP_ENTRY_BYTES = 512L * 1024 * 1024;
 
+    /** Патологические *-result.json больше — обрезаются до базовых полей (без шагов). */
+    private static final long RESULT_JSON_RAW_CAP_BYTES = 32L * 1024 * 1024;
+
+    private static final int INLINE_TEXT_CAP_BYTES = 256 * 1024;
+
     private final AllureResultsParser parser;
     private final TestRunRepository testRunRepository;
     private final AllureTestResultRepository testResultRepository;
     private final AllureAttachmentRepository attachmentRepository;
     private final CategoryService categoryService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${report.allure-results.storage-dir:./data/allure}")
     private String storageDir;
@@ -86,7 +108,6 @@ public class AllureResultsStorageService {
      * @param runId    существующий прогон (если null — создаётся новый)
      * @param threadId категория (message_thread_id) для нового прогона
      */
-    @Transactional
     public ImportOutcome importZip(InputStream zipStream, String runId, String threadId, RunMeta meta) throws IOException {
         Path tempDir = Files.createTempDirectory("allure-import");
         try {
@@ -108,9 +129,10 @@ public class AllureResultsStorageService {
         TestRunEntity run = resolveRun(runId, threadId);
         replacePreviousImport(run.getId());
 
-        Path runDir = runDirectory(run.getId());
-        deleteRecursive(runDir);
-        copyResults(resultsDir, runDir);
+        // аттачи → один deflate-пак на прогон; loose-каталогов не оставляем
+        Path pack = attachmentPackPath(run.getId());
+        writeAttachmentPack(resultsDir, pack);
+        deleteRecursive(runDirectory(run.getId()));
 
         List<AllureTestResultEntity> entities = new ArrayList<>();
         int sortIndex = 0;
@@ -127,6 +149,7 @@ public class AllureResultsStorageService {
             entity.setStopMs(result.stop());
             entity.setSuiteName(result.suiteName());
             entity.setFlaky(result.flaky());
+            entity.setResultJsonGz(readResultJsonGz(resultsDir, result));
             entities.add(entity);
         }
         testResultRepository.saveAll(entities);
@@ -148,9 +171,72 @@ public class AllureResultsStorageService {
         attachmentRepository.saveAll(attachments);
 
         applyRunSummary(run, parsed, meta);
-        log.info("Импортирован allure-прогон {}: {} тестов, {} аттачей",
-                run.getId(), entities.size(), attachments.size());
+        log.info("Импортирован allure-прогон {}: {} тестов, {} аттачей, пак {} байт",
+                run.getId(), entities.size(), attachments.size(), Files.exists(pack) ? Files.size(pack) : 0);
         return new ImportOutcome(run, parsed);
+    }
+
+    /** gzip полного result JSON; сверх капа — урезанный JSON без шагов. */
+    private byte[] readResultJsonGz(Path resultsDir, AllureParsedResult result) throws IOException {
+        Path file = resultsDir.resolve(result.uuid() + "-result.json");
+        if (!Files.exists(file)) {
+            return gzip(minimalResultJson(result).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        if (Files.size(file) > RESULT_JSON_RAW_CAP_BYTES) {
+            log.warn("result.json {} больше {} байт — шаги не сохраняются",
+                    result.uuid(), RESULT_JSON_RAW_CAP_BYTES);
+            return gzip(minimalResultJson(result).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        return gzip(Files.readAllBytes(file));
+    }
+
+    private String minimalResultJson(AllureParsedResult result) {
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("uuid", result.uuid());
+        if (result.name() != null) {
+            root.put("name", result.name());
+        }
+        if (result.fullName() != null) {
+            root.put("fullName", result.fullName());
+        }
+        root.put("status", result.status());
+        ObjectNode details = root.putObject("statusDetails");
+        if (result.message() != null) {
+            details.put("message", result.message());
+        }
+        root.putArray("steps");
+        root.putArray("attachments");
+        root.putArray("parameters");
+        ArrayNode labels = root.putArray("labels");
+        if (result.suiteName() != null) {
+            labels.addObject().put("name", "suite").put("value", result.suiteName());
+        }
+        return root.toString();
+    }
+
+    private static byte[] gzip(byte[] raw) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream(Math.max(64, raw.length / 4));
+        try (GZIPOutputStream gz = new GZIPOutputStream(out)) {
+            gz.write(raw);
+        }
+        return out.toByteArray();
+    }
+
+    private void writeAttachmentPack(Path resultsDir, Path pack) throws IOException {
+        Files.createDirectories(pack.getParent());
+        try (ZipOutputStream zip = new ZipOutputStream(
+                Files.newOutputStream(pack, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+             Stream<Path> files = Files.list(resultsDir)) {
+            for (Path file : (Iterable<Path>) files.sorted()::iterator) {
+                String fileName = file.getFileName().toString();
+                if (!fileName.contains("-attachment")) {
+                    continue;
+                }
+                zip.putNextEntry(new ZipEntry(fileName));
+                Files.copy(file, zip);
+                zip.closeEntry();
+            }
+        }
     }
 
     private void extractZip(InputStream in, Path target) throws IOException {
@@ -171,7 +257,7 @@ public class AllureResultsStorageService {
                 }
                 Path file = safeTarget(target, entry.getName());
                 Files.createDirectories(file.getParent());
-                long copied = Files.copy(zip, file, StandardCopyOption.REPLACE_EXISTING);
+                long copied = Files.copy(zip, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 total += copied;
                 if (total > MAX_ZIP_TOTAL_BYTES) {
                     throw new IllegalArgumentException("Архив распаковывается больше лимита");
@@ -266,24 +352,13 @@ public class AllureResultsStorageService {
         attachmentRepository.deleteByRunIdIn(List.of(runId));
     }
 
-    private static void copyResults(Path resultsDir, Path runDir) throws IOException {
-        Path resultsTarget = runDir.resolve("results");
-        Path attachmentsTarget = runDir.resolve("attachments");
-        Files.createDirectories(resultsTarget);
-        Files.createDirectories(attachmentsTarget);
+    // ==== Чтение ====
 
-        try (Stream<Path> files = Files.list(resultsDir)) {
-            for (Path file : (Iterable<Path>) files.sorted()::iterator) {
-                String fileName = file.getFileName().toString();
-                if (fileName.endsWith("-result.json") || fileName.endsWith("-container.json")) {
-                    Files.copy(file, resultsTarget.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
-                } else if (fileName.contains("-attachment")) {
-                    Files.copy(file, attachmentsTarget.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
-                }
-            }
-        }
+    public Path attachmentPackPath(String runId) {
+        return Path.of(storageDir).resolve(runId + "-attachments.zip");
     }
 
+    /** Легаси-каталог loose-данных (до перехода на пак); используется только для чистки. */
     public Path runDirectory(String runId) {
         return Path.of(storageDir).resolve(runId);
     }
@@ -297,28 +372,94 @@ public class AllureResultsStorageService {
         return attachmentRepository.findById(source);
     }
 
-    public byte[] readAttachmentContent(AllureAttachmentEntity attachment) throws IOException {
-        Path file = runDirectory(attachment.getRunId()).resolve("attachments").resolve(attachment.getSource());
-        return Files.readAllBytes(file);
-    }
-
-    /** Полный результат теста (шаги/аттачи/лейблы) из raw-файла на диске. */
+    /** Полный результат теста (шаги/аттачи/лейблы) — из сжатого JSON в БД, без диска. */
     public Optional<com.appscreener.report.model.allure.AllureRichResult> loadRichResult(String runId, String resultId) {
         return findTestResult(runId, resultId).flatMap(entity -> {
-            Path raw = runDirectory(runId).resolve("results").resolve(resultId + "-result.json");
-            if (!Files.exists(raw)) {
+            byte[] gz = entity.getResultJsonGz();
+            if (gz == null || gz.length == 0) {
                 return Optional.empty();
             }
             try {
-                return Optional.of(parser.parseFullResult(raw));
+                return Optional.of(parser.parseFullResultGz(gz));
             } catch (IOException e) {
-                log.warn("Не удалось прочитать raw result {} прогона {}: {}", resultId, runId, e.getMessage());
+                log.warn("Не удалось разобрать result JSON теста {} прогона {}: {}", resultId, runId, e.getMessage());
                 return Optional.empty();
             }
         });
     }
 
-    private static final int INLINE_TEXT_CAP_BYTES = 256 * 1024;
+    /**
+     * Открытый поток аттача из пака прогона; {@link #close()} закрывает и pak-файл.
+     * Возвращается именно поток: аттач может быть большим (видео), в память не грузим.
+     */
+    public static final class AttachmentStream implements AutoCloseable {
+
+        private final InputStream stream;
+        private final ZipFile zipFile;
+        private final long size;
+
+        private AttachmentStream(InputStream stream, ZipFile zipFile, long size) {
+            this.stream = stream;
+            this.zipFile = zipFile;
+            this.size = size;
+        }
+
+        public InputStream stream() {
+            return stream;
+        }
+
+        public long size() {
+            return size;
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                stream.close();
+            } finally {
+                zipFile.close();
+            }
+        }
+    }
+
+    public Optional<AttachmentStream> openAttachmentStream(AllureAttachmentEntity attachment) throws IOException {
+        Path pack = attachmentPackPath(attachment.getRunId());
+        if (!Files.exists(pack)) {
+            return Optional.empty();
+        }
+        ZipFile zip = new ZipFile(pack.toFile());
+        ZipEntry entry = zip.getEntry(attachment.getSource());
+        if (entry == null) {
+            zip.close();
+            return Optional.empty();
+        }
+        return Optional.of(new AttachmentStream(zip.getInputStream(entry), zip, entry.getSize()));
+    }
+
+    /** Текст аттача (до {@link #INLINE_TEXT_CAP_BYTES}) для inline-показа на странице теста. */
+    private String readInlineText(AllureAttachmentEntity attachment) {
+        try (AttachmentStream handle = openAttachmentStream(attachment).orElse(null)) {
+            if (handle == null) {
+                return null;
+            }
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[8192];
+            long read = 0;
+            int n;
+            while (read < INLINE_TEXT_CAP_BYTES && (n = handle.stream().read(chunk)) != -1) {
+                int take = (int) Math.min(n, INLINE_TEXT_CAP_BYTES - read);
+                buffer.write(chunk, 0, take);
+                read += take;
+            }
+            String text = buffer.toString(java.nio.charset.StandardCharsets.UTF_8);
+            if (read >= INLINE_TEXT_CAP_BYTES && handle.stream().read() != -1) {
+                text += "\n… (обрезано, полный файл — по ссылке)";
+            }
+            return text;
+        } catch (IOException e) {
+            return null;
+        }
+    }
 
     /** Модель страницы теста: сущность + шаги + аттачи (с inline-текстом для text/*). */
     public Optional<AllureTestPageView> buildTestPage(String runId, String resultId) {
@@ -400,28 +541,15 @@ public class AllureResultsStorageService {
     }
 
     private AllureTestPageView.AttachmentView toAttachmentView(AllureAttachmentRef ref, AllureAttachmentEntity att) {
-        String inlineText = null;
         String contentType = ref.type() != null && !ref.type().isBlank() ? ref.type() : att.getContentType();
+        String inlineText = null;
         if (contentType != null && (contentType.startsWith("text/") || contentType.contains("json")
                 || contentType.contains("xml") || contentType.contains("markdown"))) {
-            inlineText = readTextCapped(runDirectory(att.getRunId()).resolve("attachments").resolve(att.getSource()));
+            inlineText = readInlineText(att);
         }
         String displayName = ref.name() != null && !ref.name().isBlank() ? ref.name() : att.getSource();
         return new AllureTestPageView.AttachmentView(att.getSource(), displayName, contentType,
                 att.getSizeBytes(), inlineText);
-    }
-
-    private String readTextCapped(Path file) {
-        try {
-            byte[] bytes = Files.readAllBytes(file);
-            String text = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-            if (text.length() > INLINE_TEXT_CAP_BYTES) {
-                return text.substring(0, INLINE_TEXT_CAP_BYTES) + "\n… (обрезано, полный файл — по ссылке)";
-            }
-            return text;
-        } catch (IOException e) {
-            return null;
-        }
     }
 
     /** Чистка allure-данных прогонов; вызывается retention-ом. */
@@ -433,6 +561,11 @@ public class AllureResultsStorageService {
         testResultRepository.deleteByRunIdIn(runIds);
         attachmentRepository.deleteByRunIdIn(runIds);
         for (String runId : runIds) {
+            try {
+                Files.deleteIfExists(attachmentPackPath(runId));
+            } catch (IOException e) {
+                log.warn("Не удалось удалить пак аттачей {}: {}", runId, e.getMessage());
+            }
             deleteRecursive(runDirectory(runId));
         }
     }
