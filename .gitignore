@@ -5,3 +5,4 @@ application-local.properties
 .deploy/
 .idea/
 /appscreener/
+/test-server/
