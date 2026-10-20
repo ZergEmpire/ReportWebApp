@@ -145,9 +145,11 @@
             </p>
         </section>
 
-        <DIV class="links-row" th:if="${run.pipelineUrl != null or run.allureUrl != null}">
+        <DIV class="links-row" th:if="${run.pipelineUrl != null or run.allureUrl != null or run.allureResults}">
             <a th:if="${run.pipelineUrl != null}" th:href="${run.pipelineUrl}" class="btn-link" target="_blank">🔗 Ссылка на Pipeline</a>
             <a th:if="${run.allureUrl != null}" th:href="${run.allureUrl}" class="btn-link" target="_blank">📊 Ссылка на Allure TestOps</a>
+            <a th:if="${run.allureResults}" class="btn-link"
+               th:href="@{/report/{id}/export.md(id=${run.id})}">⬇ Выгрузить .md отчёт</a>
         </DIV>
 
         <!-- Нативные allure-results: списки тестов из импортированного прогона -->
