@@ -11,12 +11,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,14 +31,14 @@ class MarkdownReportParserTest {
 
     @BeforeEach
     void setUp() {
-        when(categoryRepository.findAllByOrderBySortOrderAscLabelAsc()).thenReturn(List.of());
+        lenient().when(categoryRepository.findAllByOrderBySortOrderAscLabelAsc()).thenReturn(List.of());
         parser = new MarkdownReportParser(new CategoryService(categoryRepository));
     }
 
     @Test
     void parseExpressSummaryFile() throws Exception {
         Path path = Path.of("seed-payloads/express-summary.txt");
-        String text = Files.readString(path);
+        String text = Files.readString(path, StandardCharsets.UTF_8);
         ParsedReport report = parser.parse(text, "express");
 
         assertEquals(ReportType.TEST_RUN_SUMMARY, report.getReportType());
@@ -44,14 +46,14 @@ class MarkdownReportParserTest {
         assertEquals(13, report.getPassedTests());
         assertEquals(4, report.getFailedTests());
         assertEquals(0, report.getSkippedTests());
-        assertEquals("Набор для smoke check (appScreener)", report.getTitle());
+        assertEquals("Набор для проверки анализа OSA в экспресс формате (appScreener)", report.getTitle());
         assertNotNull(report.getStandUrl());
         assertEquals("https://appscreener-ui01d.ast.rt-solar.ru", report.getStandUrl());
     }
 
     @Test
     void parseDailySummaryAndSuites() throws Exception {
-        String daily = Files.readString(Path.of("seed-payloads/summary-daily.txt"));
+        String daily = Files.readString(Path.of("seed-payloads/summary-daily.txt"), StandardCharsets.UTF_8);
         ParsedReport summary = parser.parse(daily, "summary");
         assertEquals(ReportType.DAILY_SUMMARY, summary.getReportType());
         assertEquals("19.05.2026", summary.getSummaryDate());
@@ -60,13 +62,13 @@ class MarkdownReportParserTest {
         assertEquals(8, summary.getSkippedTests());
         assertEquals(187, summary.getTotalTests());
 
-        String okSuites = Files.readString(Path.of("seed-payloads/summary-suites-ok.txt"));
+        String okSuites = Files.readString(Path.of("seed-payloads/summary-suites-ok.txt"), StandardCharsets.UTF_8);
         ParsedReport ok = parser.parse(okSuites, "summary");
         assertEquals(ReportType.SUCCESSFUL_SUITES, ok.getReportType());
         assertEquals(3, ok.getTestItems().size());
         assertEquals("Patch/ApiSuiteStart.xml", ok.getTestItems().get(0).getPath());
 
-        String failSuites = Files.readString(Path.of("seed-payloads/summary-suites-fail.txt"));
+        String failSuites = Files.readString(Path.of("seed-payloads/summary-suites-fail.txt"), StandardCharsets.UTF_8);
         ParsedReport fail = parser.parse(failSuites, "summary");
         assertEquals(ReportType.FAILED_SUITES, fail.getReportType());
         assertEquals(2, fail.getTestItems().size());
@@ -99,7 +101,7 @@ class MarkdownReportParserTest {
     @Test
     void parseStandNotification() throws Exception {
         String text = java.nio.file.Files.readString(
-                java.nio.file.Path.of("seed-payloads/stand-status-notification.txt"));
+                java.nio.file.Path.of("seed-payloads/stand-status-notification.txt"), StandardCharsets.UTF_8);
         ParsedReport report = parser.parse(text, "healthy");
 
         assertEquals(ReportType.NOTIFICATION, report.getReportType());
@@ -107,7 +109,8 @@ class MarkdownReportParserTest {
         assertEquals("https://api-stand.dev.example.com", report.getStandUrl());
         assertEquals(0, report.getFailedTests());
         assertEquals(1, report.getPassedTests());
-        assertTrue(report.getTestItems().stream().anyMatch(i -> "Статус".equals(i.getName())));
+        assertTrue(report.getTestItems().stream()
+                .anyMatch(i -> "✅".equals(i.getIcon()) && i.getName() != null && i.getName().contains("HTTP 200")));
         assertNotNull(report.getPipelineUrl());
     }
 

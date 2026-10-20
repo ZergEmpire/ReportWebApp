@@ -1191,3 +1191,216 @@ body.auth-screen {
     font-size: 0.95rem;
     color: var(--text-muted);
 }
+
+/* ===== Allure test page (/report/{runId}/allure/{resultId}) ===== */
+
+.hero-sub {
+    margin: 0.4rem 0 0;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+}
+
+.test-fullname {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.flaky-mark {
+    display: inline-block;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--gold-dim);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.error-block {
+    border-left: 3px solid var(--danger);
+}
+
+.error-message {
+    color: #f0b0b0;
+    white-space: pre-wrap;
+}
+
+.trace-details summary {
+    cursor: pointer;
+    color: var(--gold-light);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.param-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 0.5rem;
+}
+
+.param-list li {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    padding: 0.4rem 0.6rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.param-name {
+    color: var(--gold-light);
+    flex-shrink: 0;
+}
+
+.param-value {
+    word-break: break-all;
+    color: var(--text);
+}
+
+.attachment-figure {
+    margin: 0 0 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.attachment-figure figcaption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    word-break: break-word;
+}
+
+.attachment-image {
+    display: block;
+    max-width: 100%;
+    max-height: 720px;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: zoom-in;
+}
+
+.attachment-video {
+    display: block;
+    width: 100%;
+    max-height: 560px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #000;
+}
+
+.attachment-figure .attachment-frame {
+    min-height: 420px;
+}
+
+.attachment-figure .attachment-text {
+    max-height: 480px;
+    margin: 0;
+}
+
+.step-tree {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.step-tree-flat .step-row {
+    margin: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    padding-left: calc(0.9rem + var(--step-depth, 0) * 1.1rem);
+}
+
+.step-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: baseline;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+}
+
+.step-line:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.step-extra {
+    padding: 0 0.5rem 0.4rem 0.5rem;
+}
+
+.step-status {
+    flex-shrink: 0;
+    padding: 0.02rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: 1px solid transparent;
+}
+
+.step-passed .step-status {
+    color: #7fd6a4;
+    border-color: rgba(61, 143, 95, 0.55);
+    background: rgba(61, 143, 95, 0.12);
+}
+
+.step-failed .step-status,
+.step-broken .step-status {
+    color: #f0a0a0;
+    border-color: rgba(196, 92, 92, 0.55);
+    background: rgba(196, 92, 92, 0.12);
+}
+
+.step-skipped .step-status,
+.step-unknown .step-status {
+    color: var(--text-muted);
+    border-color: rgba(154, 149, 136, 0.4);
+    background: rgba(154, 149, 136, 0.1);
+}
+
+.step-name {
+    word-break: break-word;
+}
+
+.step-duration {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.step-error {
+    margin: 0.35rem 0;
+    color: #f0b0b0;
+    white-space: pre-wrap;
+}
+
+.step-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: flex-start;
+}
+
+.step-attachment-thumb img {
+    display: block;
+    max-width: 260px;
+    max-height: 160px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: zoom-in;
+}

@@ -460,8 +460,24 @@ curl -s "$REPORT_WEB_APP_URL/api/categories" -H "Cookie: ..."   # при вкл�
 | GET | `/api/allure/testresult/{id}` | Stacktrace из Allure TestOps |
 | GET | `/api/allure/testresult/{id}/screenshot` | Скриншот падения из вложений Allure |
 | GET | `/api/allure/status` | Настроен ли токен Allure |
+| GET | `/api/allure/attachments/{source}` | Содержимое аттача нативного allure-прогона (под авторизацией) |
+| POST | `/allure-results` | Загрузка zip allure-results (см. ниже; без авторизации, как `/sendMessage`) |
 
-При `report.auth.enabled=true` для `/api/*` нужна сессия после входа по ключу; `/sendMessage` остаётся открытым.
+При `report.auth.enabled=true` для `/api/*` нужна сессия после входа по ключу; `/sendMessage` и `/allure-results` остаются открытыми.
+
+---
+
+## Нативный импорт allure-results (без Allure TestOps)
+
+Report Web App умеет сам читать формат Allure (`*-result.json`, `*-container.json`,
+`*-attachment.*`): TelegramTestListener заливает zip каталога `app/allure-results`
+после прогона на `POST /allure-results` — сервис считает сводку, построит списки тестов
+и страницу каждого теста (дерево шагов, message/stacktrace, скриншоты и аттачи).
+Подробный контракт и инструкция для автотестов: [docs/allure-results-native.md](docs/allure-results-native.md).
+
+Хранение: raw JSON и аттачи — `data/allure/{runId}/` (свойство
+`report.allure-results.storage-dir`), в БД — индексные записи; retention чистит вместе
+с прогонами.
 
 ---
 

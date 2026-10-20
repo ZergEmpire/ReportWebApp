@@ -150,7 +150,48 @@
             <a th:if="${run.allureUrl != null}" th:href="${run.allureUrl}" class="btn-link" target="_blank">📊 Ссылка на Allure TestOps</a>
         </DIV>
 
-        <section class="tests-block fail-block" th:if="${!run.failedTestsList.isEmpty()}">
+        <!-- Нативные allure-results: списки тестов из импортированного прогона -->
+        <section class="tests-block fail-block" th:if="${run.allureResults and !run.allureFailedTests.isEmpty()}">
+            <h2 class="block-title">❌ Упавшие тесты с ошибкой</h2>
+            <p class="hint">Каждый тест — ссылка на страницу со шагами, stacktrace, скриншотами и аттачами (allure-results).</p>
+            <ul class="test-items">
+                <li th:each="t : ${run.allureFailedTests}" th:classappend="'test-item-rich'">
+                    <span class="ti-icon" th:text="${t.icon}">❌</span>
+                    <DIV class="test-item-body">
+                        <a th:href="${t.url}" th:text="${t.name}">test</a>
+                        <code class="suite-path" th:if="${t.path != null and !t.path.equals(t.name)}" th:text="${t.path}">tests.Class.method</code>
+                    </DIV>
+                </li>
+            </ul>
+        </section>
+
+        <section class="tests-block pass-block" th:if="${run.allureResults and !run.allurePassedTests.isEmpty()}">
+            <h2 class="block-title">✅ Успешно пройденные тесты</h2>
+            <ul class="test-items">
+                <li th:each="t : ${run.allurePassedTests}">
+                    <span class="ti-icon" th:text="${t.icon}">✅</span>
+                    <DIV class="test-item-body">
+                        <a th:href="${t.url}" th:text="${t.name}">test</a>
+                        <code class="suite-path" th:if="${t.path != null and !t.path.equals(t.name)}" th:text="${t.path}">tests.Class.method</code>
+                    </DIV>
+                </li>
+            </ul>
+        </section>
+
+        <section class="tests-block skip-block" th:if="${run.allureResults and !run.allureSkippedTests.isEmpty()}">
+            <h2 class="block-title">➡️ Тесты, которые не были запущены из-за системной ошибки</h2>
+            <ul class="test-items">
+                <li th:each="t : ${run.allureSkippedTests}">
+                    <span class="ti-icon" th:text="${t.icon}">➡️</span>
+                    <DIV class="test-item-body">
+                        <a th:href="${t.url}" th:text="${t.name}">test</a>
+                        <code class="suite-path" th:if="${t.path != null and !t.path.equals(t.name)}" th:text="${t.path}">tests.Class.method</code>
+                    </DIV>
+                </li>
+            </ul>
+        </section>
+
+        <section class="tests-block fail-block" th:if="${!run.allureResults and !run.failedTestsList.isEmpty()}">
             <h2 class="block-title">❌ Упавшие тесты с ошибкой</h2>
             <p class="hint" th:if="${allureConfigured}">Тесты со ссылкой на Allure TestOps — stacktrace и скриншот падения через API.</p>
             <p class="hint muted" th:if="${!allureConfigured}">Stacktrace из Allure недоступен: на сервере не задан <code>ALLURE_TESTOPS_TOKEN</code>.</p>
@@ -202,7 +243,7 @@
             </ul>
         </section>
 
-        <section class="tests-block pass-block" th:if="${!run.passedTestsList.isEmpty()}">
+        <section class="tests-block pass-block" th:if="${!run.allureResults and !run.passedTestsList.isEmpty()}">
             <h2 class="block-title">✅ Успешно пройденные тесты</h2>
             <ul class="test-items">
                 <li th:each="t : ${run.passedTestsList}"
@@ -235,7 +276,7 @@
             </ul>
         </section>
 
-        <section class="tests-block skip-block" th:if="${!run.skippedTestsList.isEmpty()}">
+        <section class="tests-block skip-block" th:if="${!run.allureResults and !run.skippedTestsList.isEmpty()}">
             <h2 class="block-title">➡️ Тесты, которые не были запущены из-за системной ошибки</h2>
             <ul class="test-items">
                 <li th:each="t : ${run.skippedTestsList}">

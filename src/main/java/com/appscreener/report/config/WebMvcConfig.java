@@ -21,6 +21,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/auth/**",
                         "/sendMessage",
                         "/pinChatMessage",
+                        "/allure-results",
                         "/css/**",
                         "/js/**",
                         "/build-id.txt",
