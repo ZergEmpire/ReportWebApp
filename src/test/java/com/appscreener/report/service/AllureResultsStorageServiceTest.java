@@ -169,6 +169,19 @@ class AllureResultsStorageServiceTest {
         assertTrue(passed.getAttachments().get(0).isInlineText());
         assertTrue(passed.getAttachments().get(0).getInlineText().contains("SignalR-2.4.3"));
 
+        // аннотации allure
+        assertEquals("Sergej Kavalerov", passed.getOwner());
+        assertEquals("critical", passed.getSeverity());
+        assertEquals("severity-critical", passed.getSeverityClass());
+        assertEquals("Модуль API", passed.getEpic());
+        assertEquals("Проекты", passed.getFeature());
+        assertEquals("Список проектов", passed.getStory());
+        assertEquals(1, passed.getTags().size());
+        assertEquals("smoke", passed.getTags().get(0));
+        assertTrue(passed.getDescription().contains("GET /v1/projects"));
+        assertEquals(1, passed.getLinks().size());
+        assertEquals("issue", passed.getLinks().get(0).typeLabel());
+
         // шаги восстанавливаются из БД даже без пака аттачей на диске
         Files.delete(storage.attachmentPackPath(runId));
         AllureTestPageView failedFromDb = storage.buildTestPage(runId, "22222222-2222-2222-2222-222222222222")

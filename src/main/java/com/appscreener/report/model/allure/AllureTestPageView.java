@@ -20,6 +20,17 @@ public class AllureTestPageView {
     private long durationMs;
     private String suiteName;
     private boolean flaky;
+    /** Аннотации: {@code @Owner}, {@code @Severity}, {@code @Epic}/@Feature/@Story, {@code @Tags}. */
+    private String owner;
+    private String severity;
+    private String epic;
+    private String feature;
+    private String story;
+    private List<String> tags = List.of();
+    /** {@code @Description}. */
+    private String description;
+    /** {@code @Link}/@Issue/@TmsLink. */
+    private List<AllureLink> links = List.of();
     private List<AllureStepNode> steps = List.of();
     private List<StepRow> stepRows = List.of();
     private List<AllureParam> parameters = List.of();
@@ -61,6 +72,16 @@ public class AllureTestPageView {
             case "broken" -> "broken (exception)";
             case "skipped" -> "skipped";
             default -> "unknown";
+        };
+    }
+
+    /** CSS-класс бейджа severity: blocker/critical — красные, major — жёлтый, прочие — серые. */
+    public String getSeverityClass() {
+        return switch (severity == null ? "" : severity.toLowerCase()) {
+            case "blocker" -> "severity-blocker";
+            case "critical" -> "severity-critical";
+            case "major" -> "severity-major";
+            default -> "severity-minor";
         };
     }
 
@@ -224,6 +245,70 @@ public class AllureTestPageView {
 
     public void setFlaky(boolean flaky) {
         this.flaky = flaky;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(String severity) {
+        this.severity = severity;
+    }
+
+    public String getEpic() {
+        return epic;
+    }
+
+    public void setEpic(String epic) {
+        this.epic = epic;
+    }
+
+    public String getFeature() {
+        return feature;
+    }
+
+    public void setFeature(String feature) {
+        this.feature = feature;
+    }
+
+    public String getStory() {
+        return story;
+    }
+
+    public void setStory(String story) {
+        this.story = story;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public List<AllureLink> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<AllureLink> links) {
+        this.links = links;
     }
 
     public List<AllureStepNode> getSteps() {

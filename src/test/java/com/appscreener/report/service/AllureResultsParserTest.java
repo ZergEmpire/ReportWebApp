@@ -90,6 +90,23 @@ class AllureResultsParserTest {
     }
 
     @Test
+    void fullResultParsesAnnotations() throws Exception {
+        AllureRichResult rich = new AllureResultsParser()
+                .parseFullResult(sampleDir().resolve(PASSED + "-result.json"));
+
+        assertEquals("Sergej Kavalerov", rich.labels().get("owner").get(0));
+        assertEquals("critical", rich.labels().get("severity").get(0));
+        assertEquals("Проекты", rich.labels().get("feature").get(0));
+        assertEquals("Список проектов", rich.labels().get("story").get(0));
+        assertEquals("smoke", rich.labels().get("tag").get(0));
+        assertTrue(rich.description().contains("GET /v1/projects"));
+        assertEquals(1, rich.links().size());
+        assertEquals("https://gitlab.example.com/autotests/appscreener/-/work_items/83", rich.links().get(0).url());
+        assertEquals("issue", rich.links().get(0).type());
+        assertEquals("issue", rich.links().get(0).typeLabel());
+    }
+
+    @Test
     void attachmentFilesCollectedByName() throws Exception {
         Map<String, Path> files = new AllureResultsParser().attachmentFiles(sampleDir());
 

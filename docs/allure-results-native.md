@@ -12,10 +12,14 @@ Allure TestOps периодически нестабилен, а данные п
 
 - считает сводку прогона (passed / failed+broken / skipped, длительность, сюиты);
 - строит списки тестов с ссылками на страницу каждого теста;
-- на странице теста показывает: дерево шагов, message/stacktrace падения,
+- на странице теста показывает: дерево шагов с параметрами, message/stacktrace падения,
   скриншоты (png), текстовые/markdown/json/html/video аттачи;
-- аттачи хранятся на сервере (`data/allure/{runId}/…`) и раздаются эндпоинтом
-  `/api/allure/attachments/{source}`.
+- **аннотации allure**: `@Owner` (👤 в шапке), `@Severity` (цветной бейдж),
+  `@Epic › @Feature › @Story` (хлебная крошка раздела), `@Tags` (чипы),
+  `@Description` (блок описания), `@Link`/`@Issue`/`@TmsLink` (ссылки с типом),
+  параметры шагов (`@Step` с аргументами) — чипами под шагом;
+- аттачи хранятся на сервере (`data/allure/{runId}-attachments.zip`) и раздаются
+  стримингом через `/api/allure/attachments/{source}`.
 
 ## Контракт: POST /allure-results
 

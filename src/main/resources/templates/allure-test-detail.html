@@ -23,14 +23,42 @@
             <span th:if="${test.startInstant != null}" th:text="${displayTime.formatWithZone(test.startInstant)}">time</span>
             <th:block th:if="${test.durationLabel != null}"> · </th:block>
             <span th:if="${test.durationLabel != null}" th:text="${test.durationLabel}">00:01</span>
+            <th:block th:if="${test.owner != null}"> · </th:block>
+            <span th:if="${test.owner != null}" th:text="'👤 ' + ${test.owner}">owner</span>
             <th:block th:if="${test.flaky}"> · </th:block>
             <span th:if="${test.flaky}" class="flaky-mark">flaky</span>
+            <span th:if="${test.severity != null}" th:classappend="${'severity-badge ' + test.severityClass}"
+                  th:text="${test.severity}">critical</span>
+            <span th:each="tag : ${test.tags}" class="tag-chip" th:text="${tag}">tag</span>
         </p>
         <p class="hero-sub" th:if="${test.fullName != null}">
             Статус: <strong th:text="${test.statusLabel}">failed</strong>
             <code class="test-fullname" th:text="${test.fullName}">tests.Class.method</code>
         </p>
+        <p class="epic-breadcrumb" th:if="${test.epic != null or test.feature != null or test.story != null}">
+            <span th:if="${test.epic != null}" th:text="${test.epic}">Модуль</span>
+            <th:block th:if="${test.epic != null and test.feature != null}"> › </th:block>
+            <span th:if="${test.feature != null}" th:text="${test.feature}">Функциональность</span>
+            <th:block th:if="${(test.epic != null or test.feature != null) and test.story != null}"> › </th:block>
+            <span th:if="${test.story != null}" th:text="${test.story}">Сценарий</span>
+        </p>
     </article>
+
+    <section class="info-block" th:if="${test.description != null}">
+        <h2 class="block-title">Описание</h2>
+        <pre class="raw-block description-block" th:text="${test.description}">description</pre>
+    </section>
+
+    <section class="info-block" th:if="${!test.links.isEmpty()}">
+        <h2 class="block-title">Ссылки</h2>
+        <ul class="link-list">
+            <li th:each="l : ${test.links}">
+                <span class="link-type" th:text="${l.typeLabel}">issue</span>
+                <a th:href="${l.url}" target="_blank" rel="noopener"
+                   th:text="${l.name != null ? l.name : l.url}">GitLab issue</a>
+            </li>
+        </ul>
+    </section>
 
     <section class="info-block error-block" th:if="${test.statusMessage != null or test.statusTrace != null}">
         <h2 class="block-title">Ошибка падения</h2>
@@ -103,6 +131,12 @@
                     <span class="step-name" th:text="${row.step.name}">step</span>
                     <span class="step-duration" th:if="${row.step.durationMs > 0}"
                           th:text="${row.step.durationMs + ' мс'}">12 мс</span>
+                </DIV>
+                <DIV class="step-params" th:if="${!row.step.parameters.isEmpty()}">
+                    <span th:each="p : ${row.step.parameters}" class="step-param"
+                          th:title="${p.name + ' = ' + p.value}">
+                        <code th:text="${p.name}">param</code><span th:text="${p.value}">value</span>
+                    </span>
                 </DIV>
                 <DIV class="step-extra" th:if="${!row.step.attachments.isEmpty() or row.step.message != null}">
                     <pre class="raw-block step-error" th:if="${row.step.message != null}" th:text="${row.step.message}">msg</pre>
