@@ -8,8 +8,9 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 /**
- * Тест из allure-results ({@code *-result.json}); raw JSON лежит на диске
- * ({@code data/allure/{runId}/results/{uuid}-result.json}), в БД — только индексные поля.
+ * Тест из allure-results ({@code *-result.json}).
+ * Полный JSON результата (шаги/аттачи/лейблы) хранится сжатым в {@link #resultJsonGz}
+ * — страница теста воспроизводится только из БД; аттачи лежат в паке на диске.
  */
 @Entity
 @Table(name = "allure_test_results", indexes = @Index(name = "idx_allure_results_run", columnList = "runId"))
@@ -45,6 +46,10 @@ public class AllureTestResultEntity {
     private String suiteName;
 
     private boolean flaky;
+
+    /** Gzip полного *-result.json (компактное хранение, воспроизводимое из БД). */
+    @Lob
+    private byte[] resultJsonGz;
 
     public String getId() {
         return id;
@@ -132,6 +137,14 @@ public class AllureTestResultEntity {
 
     public void setFlaky(boolean flaky) {
         this.flaky = flaky;
+    }
+
+    public byte[] getResultJsonGz() {
+        return resultJsonGz;
+    }
+
+    public void setResultJsonGz(byte[] resultJsonGz) {
+        this.resultJsonGz = resultJsonGz;
     }
 
     public boolean isFailedLike() {
