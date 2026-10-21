@@ -22,6 +22,8 @@ public interface TestRunRepository extends JpaRepository<TestRunEntity, String> 
     Optional<TestRunEntity> findFirstByCategoryCodeAndReceivedAtAfterOrderByReceivedAtDesc(
             String categoryCode, Instant after);
 
+    List<TestRunEntity> findAllByCategoryCodeAndReceivedAtBefore(String categoryCode, Instant cutoff);
+
     @Modifying
     @Transactional
     @Query("UPDATE TestRunEntity t SET t.pinned = false WHERE t.reportType IN ('TEST_RUN_SUMMARY', 'DAILY_SUMMARY')")

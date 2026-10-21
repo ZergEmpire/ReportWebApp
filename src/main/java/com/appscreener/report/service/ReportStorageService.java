@@ -150,6 +150,25 @@ public class ReportStorageService {
         return deleted;
     }
 
+    /**
+     * Очистка раздела «Отладка»: удаляет debug-прогоны (сообщениями и allure-данными)
+     * старнее cutoff. Вызывается расписанием {@code report.debug-retention.*}
+     * (по умолчанию — проверка ежедневно, возраст 14 дней).
+     */
+    @Transactional
+    public int deleteDebugOlderThan(Instant cutoff) {
+        List<TestRunEntity> oldDebugRuns = testRunRepository
+                .findAllByCategoryCodeAndReceivedAtBefore(ReportCategory.DEBUG.getCode(), cutoff);
+        if (oldDebugRuns.isEmpty()) {
+            return 0;
+        }
+        List<String> runIds = oldDebugRuns.stream().map(TestRunEntity::getId).toList();
+        messageRepository.deleteByTestRun_IdIn(runIds);
+        testRunRepository.deleteAllById(runIds);
+        allureResultsStorage.deleteRunData(runIds);
+        return runIds.size();
+    }
+
     private TestRunEntity resolveTestRun(ParsedReport parsed, CategoryInfo category,
                                          String runId, String messageId, Instant now) {
         if (runId != null && !runId.isBlank()) {

@@ -21,4 +21,8 @@ public interface ReportMessageRepository extends JpaRepository<ReportMessageEnti
     @Transactional
     @Query("DELETE FROM ReportMessageEntity m WHERE m.receivedAt < :cutoff")
     int deleteOlderThan(@Param("cutoff") Instant cutoff);
+
+    @Modifying
+    @Transactional
+    void deleteByTestRun_IdIn(java.util.Collection<String> runIds);
 }
