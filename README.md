@@ -527,6 +527,8 @@ java -jar target/report-web-app-1.0-SNAPSHOT.jar
 - **H2:** `./data/reportdb`
 - **Таблица категорий:** `report_categories` (пользовательские)
 - **Retention:** записи старше 365 дней удаляются по cron (`report.retention.days`)
+- **Раздел «Отладка»:** проверка ежедневно в 03:20, debug-прогоны старше 14 дней удаляются
+  (`report.debug-retention.days`, `0` — отключить)
 
 Сброс: остановить app → удалить `data/` → запустить снова.
 
